@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+//import org.photonvision.PhotonCamera;
 
 
 /**
@@ -42,15 +44,18 @@ public class Robot extends TimedRobot {
   Double dist = null;
   Double xd1;
 
-  private final XboxController m_Xbox_Drive = new XboxController(0);
-  private final Joystick m_Joystick_Drive = new Joystick(1);
+  private final XboxController m_Xbox_Drive = new XboxController(1);
+  private final Joystick m_Joystick_Drive = new Joystick(0);
 
-  private final CANSparkMax m_Front_Left = new CANSparkMax(1, MotorType.kBrushless);
-  private final CANSparkMax m_Front_Right = new CANSparkMax(10, MotorType.kBrushless);
-  private final CANSparkMax m_Back_Left = new CANSparkMax(2, MotorType.kBrushless);
+  private final CANSparkMax m_Front_Left = new CANSparkMax(2, MotorType.kBrushless);
+  private final CANSparkMax m_Front_Right = new CANSparkMax(3, MotorType.kBrushless);
+  private final CANSparkMax m_Back_Left = new CANSparkMax(1, MotorType.kBrushless);
   private final CANSparkMax m_Back_Right = new CANSparkMax(9, MotorType.kBrushless);
 
-  private final DigitalInput bump = new DigitalInput(9);
+  private final CANSparkMax m_elevator = new CANSparkMax(10, MotorType.kBrushless);
+  private final CANSparkMax m_intake = new CANSparkMax(8, MotorType.kBrushless);
+
+  private final DigitalInput elevator_top_switch = new DigitalInput(9);
 
   private final MotorControllerGroup m_Left = new MotorControllerGroup(m_Front_Left, m_Back_Left);
   private final MotorControllerGroup m_Right = new MotorControllerGroup(m_Front_Right, m_Back_Right);
@@ -58,9 +63,13 @@ public class Robot extends TimedRobot {
   private final DifferentialDrive m_Drive = new DifferentialDrive(m_Left, m_Right);
 
   private final Timer m_timer = new Timer();
-  public static boolean m_first = false;
-  public static boolean m_second = false;
-  public static boolean m_third = false;
+  private double getY;
+  private double getZ;
+  private boolean held = false;
+  private final Timer intake_ease_timer = new Timer();
+
+  private int whichAuto = 1;
+  //PhotonCamera camera = new PhotonCamera("photonvision");
 
 
 
@@ -117,21 +126,43 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     System.out.println("starting autonomous");
-    double time = Timer.getFPGATimestamp();
-
-    if (time < 2) {
-      m_Left.set(.20);
-      m_Right.set(.20);
-    }
-    else {
-      m_Left.set(0.0);
-      m_Right.set(0.0);
-    }
+    m_timer.reset();
+    m_timer.start();
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+    
+    
+    if (whichAuto == 1) {
+
+      // goes 28 inches in 1.0 second at 0.20 power
+      if (m_timer.get() < 1.0) {
+        m_Left.set(.20);
+        m_Right.set(.20);
+      }
+      // rotates ~90 degrees in 0.9 seconds at 0.20 power
+      else if ((m_timer.get() > 1.2) && (m_timer.get() < 2.1)) {
+        m_Left.set(0.20);
+        m_Right.set(-0.20);
+      }
+      else if ((m_timer.get() > 2.3) && (m_timer.get() < 2.8)) {
+        m_Left.set(.20);
+        m_Right.set(.20);
+      }
+      else {
+        m_Left.set(0);
+        m_Right.set(0);
+      }
+    }
+
+    else if (whichAuto == 2) {
+      if (m_timer.get() < 1.0) {
+        m_Left.set(.20);
+        m_Right.set(.20);
+      }
+    }
 
   }
 
@@ -144,15 +175,58 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    m_Drive.arcadeDrive(-m_Joystick_Drive.getY(), m_Joystick_Drive.getZ());
 
-    if (m_Xbox_Drive.getRightBumper() && bump.get() == false) {
-      //elevator
-      System.out.println("elevator up");
+    getY = m_Joystick_Drive.getY();
+    getZ = m_Joystick_Drive.getZ();
+    
+    if (Math.abs(getZ) < 0.1) {
+      getZ = 0;
     }
-    else if (m_Xbox_Drive.getLeftBumper()) {
-      System.out.println("elevator down");
+    if (Math.abs(getY) < 0.1) {
+      getY = 0;
     }
+
+    m_Drive.arcadeDrive(-getY/1.2, getZ/1.2);
+    
+
+    if (m_Xbox_Drive.getLeftBumper() || m_Xbox_Drive.getRightBumper()) {
+      if (held == false) {
+        held = true;
+        intake_ease_timer.reset();
+        intake_ease_timer.start();
+      }
+      if (m_Xbox_Drive.getLeftBumper()) {
+        if (intake_ease_timer.get() > 0.5) {
+          m_intake.set(0.6);
+        }
+        else {
+          m_intake.set(0.6*(intake_ease_timer.get()*2));
+        }
+        m_Xbox_Drive.setRumble(RumbleType.kLeftRumble, 0.5);
+        m_Xbox_Drive.setRumble(RumbleType.kRightRumble, 0);
+      }
+      else if (m_Xbox_Drive.getRightBumper()) {
+        m_intake.set(-0.6);
+        m_Xbox_Drive.setRumble(RumbleType.kLeftRumble, 0);
+        m_Xbox_Drive.setRumble(RumbleType.kRightRumble, 0.5);
+      }
+    }
+    else {
+      m_intake.set(0);
+      m_Xbox_Drive.setRumble(RumbleType.kLeftRumble, 0);
+      m_Xbox_Drive.setRumble(RumbleType.kRightRumble, 0);
+      held = false;
+    }
+
+    if (m_Xbox_Drive.getRightTriggerAxis() > 0.08 && elevator_top_switch.get()) {
+      //elevatur go upsies
+      m_elevator.set(0.7*(m_Xbox_Drive.getRightTriggerAxis()));
+    }
+    else if (m_Xbox_Drive.getLeftTriggerAxis() > 0.08) {
+      //elevatur go downsies
+      m_elevator.set(-0.7*(m_Xbox_Drive.getLeftTriggerAxis()));
+    }
+    else {m_elevator.set(0);}
   }
 
   /** This function is called once when the robot is disabled. */
