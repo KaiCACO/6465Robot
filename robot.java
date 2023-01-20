@@ -4,22 +4,28 @@
 
 package frc.robot;
 
-import com.revrobotics.CANSparkMax;
+import static edu.wpi.first.wpilibj.DoubleSolenoid.Value.*; 
+import com.revrobotics.CANSparkMax
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+//import edu.wpi.first.util.net.PortForwarder;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Compressor;
+// import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import org.photonvision.PhotonCamera;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 
 
 /**
@@ -29,9 +35,9 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
  * project.
  */
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Shoot and Drive";
-  private static final String kCustomAuto = "Shoot";
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  // private static final String kDefaultAuto = "Shoot and Drive";
+  // private static final String kCustomAuto = "Shoot";
+  // private final SendableChooser<String> m_chooser = new SendableChooser<>();
   
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
@@ -60,16 +66,21 @@ public class Robot extends TimedRobot {
   private final MotorControllerGroup m_Left = new MotorControllerGroup(m_Front_Left, m_Back_Left);
   private final MotorControllerGroup m_Right = new MotorControllerGroup(m_Front_Right, m_Back_Right);
 
-  private final DifferentialDrive m_Drive = new DifferentialDrive(m_Left, m_Right);
+  private final DifferentialDrive m_Drive = new DifferentialDrive(m_Left, m_Right); 
+
+  private final Compressor comp = new Compressor(0, PneumaticsModuleType.CTREPCM); 
+  private final Solenoid solenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
 
   private final Timer m_timer = new Timer();
   private double getY;
-  private double getZ;
+  private double getX;
+  private double speed;
   private boolean held = false;
   private final Timer intake_ease_timer = new Timer();
 
-  private int whichAuto = 1;
+  private int whichAuto = 2;
   //PhotonCamera camera = new PhotonCamera("photonvision");
+  //PortForwarder.add(5800, "photonvision.local", 5800);
 
 
 
@@ -79,13 +90,34 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    // m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
+    // m_chooser.addOption("My Auto", kCustomADasuto);
+    // SmartDashboard.putData("Auto choices", m_chooser);
+    if (m_Xbox_Drive.getLeftBumper()) { 
+      solenoid.set(DoubleSolenoid.Value.kForward);
 
+    } else if (m_Xbox_Drive.getRightBumper()) { 
+      solenoid.set(DoubleSolenoid.Value.kReverse);
+
+    }
+    Compressor pmcCompressor = new Compressor(0, PhuematicsModule.CTREPM);
+
+    pcmCompressor.enablesDigital(); 
+    pcmCompressor.disable();
+
+    boolean enabled = pcmCompressor.enabled(); 
+    boolean pressureSwitch = pmcCompressor.getPresssureSwitchValue(); 
+    double current = pmcCompressor. getCompressorCurrent();
 
     m_Left.setInverted(false);
     m_Right.setInverted(true);
+
+    DoubleSolenoid exampleSolenoidPCM = new Solenoid(PhuematicsModulleType.CTREPM, 1, 2);
+
+    exampleSolenoidPCM.set(kOff); 
+    exampleSolenoidPCM.set(kForward); 
+    exampleSolenoidPCM.set(kReverse);
+
 
 
   }
@@ -99,18 +131,18 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    double x = tx.getDouble(0.0);
-    double y = ty.getDouble(0.0);
-    double area = ta.getDouble(0.0);
+    // double x = tx.getDouble(0.0);
+    // double y = ty.getDouble(0.0);
+    // double area = ta.getDouble(0.0);
 
-    ang = (y * (Math.PI / 180)) + 0.4188;
+    // ang = (y * (Math.PI / 180)) + 0.4188;
 
-    dist =  64 / Math.tan(ang);
+    // dist =  64 / Math.tan(ang);
 
-    SmartDashboard.putNumber("Distance", dist);
-    SmartDashboard.putNumber("LimelightX", x);
-    SmartDashboard.putNumber("LimelightY", y);
-    SmartDashboard.putNumber("LimelightArea", area);
+    // SmartDashboard.putNumber("Distance", dist);
+    // SmartDashboard.putNumber("LimelightX", x);
+    // SmartDashboard.putNumber("LimelightY", y);
+    // SmartDashboard.putNumber("LimelightArea", area);
   }
 
   /**
@@ -158,9 +190,21 @@ public class Robot extends TimedRobot {
     }
 
     else if (whichAuto == 2) {
-      if (m_timer.get() < 1.0) {
-        m_Left.set(.20);
-        m_Right.set(.20);
+      System.out.println(m_timer.get());
+      if (m_timer.get() < 11) {
+        m_Left.set(.7);
+        m_Right.set(.7);
+      }
+      else {
+        m_Left.set(0);
+        m_Right.set(0);
+      }
+
+      if (elevator_top_switch.get() && m_timer.get() < 9) {
+        m_elevator.set(.20);
+      }
+      else {
+        m_elevator.set(0);
       }
     }
 
@@ -175,19 +219,12 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    getY = -m_Joystick_Drive.getY();
+    getX = m_Joystick_Drive.getX();
 
-    getY = m_Joystick_Drive.getY();
-    getZ = m_Joystick_Drive.getZ();
+    speed = speed + (-speed)/20);
     
-    if (Math.abs(getZ) < 0.1) {
-      getZ = 0;
-    }
-    if (Math.abs(getY) < 0.1) {
-      getY = 0;
-    }
-
-    m_Drive.arcadeDrive(-getY/1.2, getZ/1.2);
-    
+    m_Drive.arcadeDrive(speed/1.0, getX/1.4);
 
     if (m_Xbox_Drive.getLeftBumper() || m_Xbox_Drive.getRightBumper()) {
       if (held == false) {
