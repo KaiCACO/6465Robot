@@ -4,28 +4,27 @@
 
 package frc.robot;
 
-import static edu.wpi.first.wpilibj.DoubleSolenoid.Value.*; 
-import com.revrobotics.CANSparkMax
+import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 //import edu.wpi.first.util.net.PortForwarder;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.Compressor;
 // import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 //import org.photonvision.PhotonCamera;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 
 
 /**
@@ -34,6 +33,7 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
+
 public class Robot extends TimedRobot {
   // private static final String kDefaultAuto = "Shoot and Drive";
   // private static final String kCustomAuto = "Shoot";
@@ -50,6 +50,7 @@ public class Robot extends TimedRobot {
   Double dist = null;
   Double xd1;
 
+  public final Compressor compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final XboxController m_Xbox_Drive = new XboxController(1);
   private final Joystick m_Joystick_Drive = new Joystick(0);
 
@@ -67,9 +68,8 @@ public class Robot extends TimedRobot {
   private final MotorControllerGroup m_Right = new MotorControllerGroup(m_Front_Right, m_Back_Right);
 
   private final DifferentialDrive m_Drive = new DifferentialDrive(m_Left, m_Right); 
-
-  private final Compressor comp = new Compressor(0, PneumaticsModuleType.CTREPCM); 
-  private final Solenoid solenoid = new Solenoid(PneumaticsModuleType.CTREPCM, 1);
+  
+  private final DoubleSolenoid solenoid = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 4, 3);
 
   private final Timer m_timer = new Timer();
   private double getY;
@@ -90,6 +90,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    compressor.enableDigital();
+
     // m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     // m_chooser.addOption("My Auto", kCustomADasuto);
     // SmartDashboard.putData("Auto choices", m_chooser);
@@ -99,28 +101,16 @@ public class Robot extends TimedRobot {
     } else if (m_Xbox_Drive.getRightBumper()) { 
       solenoid.set(DoubleSolenoid.Value.kReverse);
 
-    }
-    Compressor pmcCompressor = new Compressor(0, PhuematicsModule.CTREPM);
-
-    pcmCompressor.enablesDigital(); 
-    pcmCompressor.disable();
-
-    boolean enabled = pcmCompressor.enabled(); 
-    boolean pressureSwitch = pmcCompressor.getPresssureSwitchValue(); 
-    double current = pmcCompressor. getCompressorCurrent();
+    } 
 
     m_Left.setInverted(false);
     m_Right.setInverted(true);
-
-    DoubleSolenoid exampleSolenoidPCM = new Solenoid(PhuematicsModulleType.CTREPM, 1, 2);
-
-    exampleSolenoidPCM.set(kOff); 
-    exampleSolenoidPCM.set(kForward); 
-    exampleSolenoidPCM.set(kReverse);
-
-
-
+    
   }
+
+
+
+  
 
   /**
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
@@ -222,7 +212,7 @@ public class Robot extends TimedRobot {
     getY = -m_Joystick_Drive.getY();
     getX = m_Joystick_Drive.getX();
 
-    speed = speed + (-speed)/20);
+    speed = speed + (-speed)/20;
     
     m_Drive.arcadeDrive(speed/1.0, getX/1.4);
 
