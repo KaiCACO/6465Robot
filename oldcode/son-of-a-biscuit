@@ -104,10 +104,14 @@ public class Robot extends TimedRobot {
     getY = -m_Joystick_Drive.getY();
     getX = -m_Joystick_Drive.getX();
     
+    //This speed line makes the robot accelerate to the Joystick's position
+    //Which improves handling of the vehicle greatly.
     speedY = speedY + (getY - speedY)/18;
-    speedX = speedX + (getX - speedX)/18;
+    //The farther forward the joystick is, the less sensitive the rotation will be.
+    //This also improves handling.
+    speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
     
-    m_Drive.arcadeDrive(speedY/1.2, speedX/1.2);
+    m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
 
     if(m_Xbox_Co_Drive.getLeftTriggerAxis() > .10){
       m_Intake.set(-m_Xbox_Co_Drive.getLeftTriggerAxis());
