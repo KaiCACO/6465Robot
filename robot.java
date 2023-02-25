@@ -94,19 +94,6 @@ public class Robot extends TimedRobot {
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
-    
-    m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
-
-    if(m_Xbox_Co_Drive.getLeftTriggerAxis() > .10){
-      m_Intake.set(-m_Xbox_Co_Drive.getLeftTriggerAxis());
-    }
-    else if(m_Xbox_Co_Drive.getRightTriggerAxis() > .10){
-      m_Intake.set(m_Xbox_Co_Drive.getRightTriggerAxis());
-    }
-    else{
-      m_Intake.set(0.0);
-    }
-    
 
   }
 
