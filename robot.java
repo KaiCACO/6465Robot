@@ -1,7 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import com.revrobotics.CANSparkMax;
@@ -34,25 +30,18 @@ public class Robot extends TimedRobot {
 
   //private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
 
-  private final CANSparkMax m_Front_Left = new CANSparkMax(10, MotorType.kBrushless);
-  private final CANSparkMax m_Front_Right = new CANSparkMax(1, MotorType.kBrushless);
-  private final CANSparkMax m_Back_Left = new CANSparkMax(9, MotorType.kBrushless);
-  private final CANSparkMax m_Back_Right = new CANSparkMax(2, MotorType.kBrushless);
+  private final CANSparkMax m_Front_Left = new CANSparkMax(1, MotorType.kBrushless);
+  private final CANSparkMax m_Back_Left = new CANSparkMax(2, MotorType.kBrushless);
+  private final CANSparkMax m_Front_Right = new CANSparkMax(3, MotorType.kBrushless);
+  private final CANSparkMax m_Back_Right = new CANSparkMax(4, MotorType.kBrushless);
 
   private final MotorControllerGroup m_Left = new MotorControllerGroup(m_Front_Left, m_Back_Left);
   private final MotorControllerGroup m_Right = new MotorControllerGroup(m_Front_Right, m_Back_Right);
 
   private final DifferentialDrive m_Drive = new DifferentialDrive(m_Left, m_Right);
 
-  private final DoubleSolenoid p_Intake_Left = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 2, 3);
-  private final DoubleSolenoid p_Intake_Right = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 1, 0);
-
-  //private final CANSparkMax m_Aim = new CANSparkMax(8, MotorType.kBrushless);
-  private final CANSparkMax m_Intake = new CANSparkMax(3, MotorType.kBrushed);
-  private final CANSparkMax m_IntakeInner = new CANSparkMax(8, MotorType.kBrushless);
-  private final CANSparkMax m_Winch = new CANSparkMax(5, MotorType.kBrushless);
-  private final CANSparkMax m_Shoot1 = new CANSparkMax(4, MotorType.kBrushed);
-  private final CANSparkMax m_Shoot2 = new CANSparkMax(7, MotorType.kBrushed);
+  private final CANSparkMax m_armBase = new CANSparkMax(6, MotorType.kBrushless);
+  private final CANSparkMax m_armWinch = new CANSparkMax(5, MotorType.kBrushless);
 
   private final Timer m_timer = new Timer();
 
@@ -66,9 +55,6 @@ public class Robot extends TimedRobot {
 
     m_Left.setInverted(false);
     m_Right.setInverted(true);
-    m_Shoot2.setInverted(true);
-
-
 
   }
 
@@ -92,9 +78,7 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    p_Intake_Left.set(Value.kForward);
-    p_Intake_Right.set(Value.kForward);
-    //pcm_Compressor.enableDigital();
+    
   }
 
   /** This function is called periodically during operator control. */
@@ -122,52 +106,7 @@ public class Robot extends TimedRobot {
     else{
       m_Intake.set(0.0);
     }
-
-    if(m_Xbox_Co_Drive.getXButton()){
-      m_IntakeInner.set(0.7);
-    }
-    else if(m_Xbox_Co_Drive.getYButton()){
-      m_IntakeInner.set(-0.7);
-    }
-    else{
-      m_IntakeInner.set(0.0);
-    }
-
-    if(m_Xbox_Co_Drive.getBButton()) {
-      m_Winch.set(-0.3);
-    }
-    else if(m_Xbox_Co_Drive.getAButton()) {
-      m_Winch.set(0.3);
-    }
-    else {
-      m_Winch.set(0.0);
-    }
-
-    if(m_Xbox_Co_Drive.getRightBumper()) {
-      m_Shoot1.set(0.5);
-      m_Shoot2.set(0.5);
-    }
-    else if(m_Xbox_Co_Drive.getLeftBumper()) {
-      m_Shoot1.set(-0.5);
-      m_Shoot2.set(-0.5);
-    }
-    else {
-      m_Shoot1.set(0.0);
-      m_Shoot2.set(0.0);
-    }
-
-    if(m_Xbox_Co_Drive.getPOV() == 0) {
-      p_Intake_Left.set(Value.kReverse);
-      p_Intake_Right.set(Value.kReverse);
-    }
-    else if(m_Xbox_Co_Drive.getPOV() == 180) {
-      p_Intake_Left.set(Value.kForward);
-      p_Intake_Right.set(Value.kForward);
-    }
-    else {
-      p_Intake_Left.set(Value.kOff);
-      p_Intake_Right.set(Value.kOff);
-    }
+    
 
   }
 
@@ -184,7 +123,7 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    m_Intake.set(0.5);
+    m_armBase.set(0.1);
   }
 
   /** This function is called periodically during test mode. */
