@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Compressor;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -43,6 +45,10 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_armBase = new CANSparkMax(6, MotorType.kBrushless);
   private final CANSparkMax m_armWinch = new CANSparkMax(5, MotorType.kBrushless);
 
+  private final DutyCycleEncoder m_encoder = new DutyCycleEncoder(0);
+  private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+  private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
+
   private final Timer m_timer = new Timer();
 
 
@@ -55,6 +61,7 @@ public class Robot extends TimedRobot {
 
     m_Left.setInverted(false);
     m_Right.setInverted(true);
+    m_armBase.setInverted(true);
 
   }
 
@@ -94,6 +101,9 @@ public class Robot extends TimedRobot {
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
+    
+    m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+    
 
   }
 
@@ -109,13 +119,23 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when test mode is enabled. */
   @Override
-  public void testInit() {
-    m_armBase.set(0.1);
-  }
+  public void testInit() {}
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    if (m_Xbox_Co_Drive.getRightBumper()) {
+      m_armBase.set(0.15);
+    }
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
+      m_armBase.set(-0.15);
+    }
+    else {
+      m_armBase.set(0.0);
+    }
+    System.out.println(m_encoder.get());
+    pcm_armBreak.set(Value.kForward);
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override
