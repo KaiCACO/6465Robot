@@ -45,6 +45,10 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_armBase = new CANSparkMax(6, MotorType.kBrushless);
   private final CANSparkMax m_armWinch = new CANSparkMax(5, MotorType.kBrushless);
 
+  private final CANSparkMax m_Intake_Left = new CANSparkMax(7, MotorType.kBrushless);
+  private final CANSparkMax m_Intake_Right = new CANSparkMax(8, MotorType.kBrushless);
+  private final MotorControllerGroup m_Intake = new MotorControllerGroup(m_Intake_Left, m_Intake_Right);
+
   private final DutyCycleEncoder m_encoder = new DutyCycleEncoder(0);
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
@@ -62,6 +66,8 @@ public class Robot extends TimedRobot {
     m_Left.setInverted(false);
     m_Right.setInverted(true);
     m_armBase.setInverted(true);
+    m_Intake_Left.setInverted(true);
+    pcm_Compressor.enableDigital();
 
   }
 
@@ -92,6 +98,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
+    //movement v
     getY = -m_Joystick_Drive.getY();
     getX = -m_Joystick_Drive.getX();
     
@@ -104,6 +111,8 @@ public class Robot extends TimedRobot {
     
     m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
     
+    //xbox stuff v
+
 
   }
 
