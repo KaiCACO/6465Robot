@@ -47,9 +47,8 @@ public class Robot extends TimedRobot {
 
   private final CANSparkMax m_Intake_Left = new CANSparkMax(7, MotorType.kBrushless);
   private final CANSparkMax m_Intake_Right = new CANSparkMax(8, MotorType.kBrushless);
-  private final MotorControllerGroup m_Intake = new MotorControllerGroup(m_Intake_Left, m_Intake_Right);
 
-  private final DutyCycleEncoder m_encoder = new DutyCycleEncoder(0);
+  private final DutyCycleEncoder e_Encoder = new DutyCycleEncoder(0);
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
 
@@ -67,7 +66,9 @@ public class Robot extends TimedRobot {
     m_Right.setInverted(true);
     m_armBase.setInverted(true);
     m_Intake_Left.setInverted(true);
+    m_Intake_Right.setInverted(false);
     pcm_Compressor.enableDigital();
+    pcm_armBreak.set(Value.kOff);
 
   }
 
@@ -82,11 +83,21 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {}
   
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    m_timer.reset();
+    m_timer.start();
+  }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    if (m_timer.get() < 3.0) {
+      System.out.println("moving");
+    }
+    else {
+      System.out.println("not moving");
+    }
+  }
 
   /** This function is called once when teleop is enabled. */
   @Override
@@ -112,7 +123,43 @@ public class Robot extends TimedRobot {
     m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
     
     //xbox stuff v
-
+  
+    //arm ebow
+    if (m_Xbox_Co_Drive.getRightBumper()) {
+      m_armBase.set(0.4);
+    }
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
+      m_armBase.set(-0.4);
+    }
+    else {
+      m_armBase.set(0.0);
+    }
+  
+    //arm length
+    if (m_Xbox_Co_Drive.getBButton()) {
+      m_armWinch.set(0.15);
+    }
+    else if (m_Xbox_Co_Drive.getAButton()) {
+      m_armWinch.set(-0.15);
+    }
+    else {
+      m_armWinch.set(0.0);
+    }
+  
+    //intake
+    if (m_Xbox_Co_Drive.getXButton()) {
+      m_Intake_Right.set(0.2);
+      m_Intake_Left.set(0.2);
+    }
+    else if (m_Xbox_Co_Drive.getYButton()) {
+      m_Intake_Right.set(-0.2);
+      m_Intake_Left.set(-0.2);
+    }
+    else {
+      m_Intake_Right.set(0);
+      m_Intake_Left.set(0);
+    }
+    //System.out.println(e_Encoder.get());
 
   }
 
@@ -132,19 +179,7 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      m_armBase.set(0.15);
-    }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      m_armBase.set(-0.15);
-    }
-    else {
-      m_armBase.set(0.0);
-    }
-    System.out.println(m_encoder.get());
-    pcm_armBreak.set(Value.kForward);
-  }
+  public void testPeriodic() {}
 
   /** This function is called once when the robot is first started up. */
   @Override
