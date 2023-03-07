@@ -132,17 +132,26 @@ public class Robot extends TimedRobot {
     //arm ebow
     armPos = m_armBase.getEncoder().getPosition();
 
+    double lowerLimit = 20;
     if (m_Xbox_Co_Drive.getRightBumper()) {
-      armTarget += 0.1;
+      armTarget  += 0.1;
+      if (armTarget > lowerLimit) {
+        armTarget = lowerLimit;
+      }
     }
     else if (m_Xbox_Co_Drive.getLeftBumper()) {
       armTarget -= 0.1;
+      if (armTarget < -lowerLimit) {
+        armTarget = -lowerLimit;
+      }
     }
 
-    m_armBase.set((armTarget-armPos)/360);
+    m_armBase.set((armTarget-armPos)/20);
+    System.out.println((armTarget-armPos)/20);
+    //System.out.println(armPos);
     
-    if (m_Xbox_Co_Drive.getRawButton(6)) {
-      System.out.println("e");
+    if (m_Xbox_Co_Drive.getRawButton(8)) {
+      armTarget = 0;
     }
 
     //arm length
@@ -191,7 +200,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
-    System.out.println(m_armBase.getEncoder().getPosition());
+    pcm_Compressor.enableDigital();
   }
 
   /** This function is called once when the robot is first started up. */
