@@ -2,6 +2,7 @@ package frc.robot;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -11,7 +12,6 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.Compressor;
 
 /**
@@ -48,9 +48,12 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_Intake_Left = new CANSparkMax(7, MotorType.kBrushless);
   private final CANSparkMax m_Intake_Right = new CANSparkMax(8, MotorType.kBrushless);
 
-  private final DutyCycleEncoder e_Encoder = new DutyCycleEncoder(0);
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
+
+  double armTarget = 0.0;
+  double armSpeed = 0.0;
+  double armPos = 0.0;
 
   private final Timer m_timer = new Timer();
 
@@ -102,7 +105,9 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    
+    armTarget = 0;
+    armSpeed = 0;
+    m_armBase.getEncoder().setPosition(0);
   }
 
   /** This function is called periodically during operator control. */
@@ -125,16 +130,21 @@ public class Robot extends TimedRobot {
     //xbox stuff v
   
     //arm ebow
+    armPos = m_armBase.getEncoder().getPosition();
+
     if (m_Xbox_Co_Drive.getRightBumper()) {
-      m_armBase.set(0.4);
+      armTarget += 0.1;
     }
     else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      m_armBase.set(-0.4);
+      armTarget -= 0.1;
     }
-    else {
-      m_armBase.set(0.0);
+
+    m_armBase.set((armTarget-armPos)/360);
+    
+    if (m_Xbox_Co_Drive.getRawButton(6)) {
+      System.out.println("e");
     }
-  
+
     //arm length
     if (m_Xbox_Co_Drive.getBButton()) {
       m_armWinch.set(0.15);
@@ -159,7 +169,7 @@ public class Robot extends TimedRobot {
       m_Intake_Right.set(0);
       m_Intake_Left.set(0);
     }
-    //System.out.println(e_Encoder.get());
+    //System.out.println(m_armBase.getEncoder().getPosition());
 
   }
 
@@ -175,11 +185,14 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when test mode is enabled. */
   @Override
-  public void testInit() {}
+  public void testInit() {
+  }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    System.out.println(m_armBase.getEncoder().getPosition());
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override
