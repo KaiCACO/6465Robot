@@ -58,7 +58,7 @@ public class Robot extends TimedRobot {
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final AHRS gyro = new AHRS(I2C.Port.kMXP);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
-  private final DigitalInput bendySwitch = new DigitalInput(9);
+  private final DigitalInput bendySwitch = new DigitalInput(0);
 
   double armTarget = 0.0;
   double armSpeed = 0.0;
@@ -125,8 +125,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-
-    System.out.println(bendySwitch.get());
 
     //movement v
     getY = -m_Joystick_Drive.getY();
@@ -201,6 +199,15 @@ public class Robot extends TimedRobot {
       m_Intake_Right.set((targetPosR - RPos)/15);
       m_Intake_Left.set((targetPosL - LPos)/15);
     }
+    if (m_Xbox_Co_Drive.getRightBumper()) {
+      pcm_armBreak.set(Value.kForward);
+    }
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
+      pcm_armBreak.set(Value.kReverse);
+    }
+    else {
+      pcm_armBreak.set(Value.kOff);
+    }
 
   }
 
@@ -223,16 +230,24 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      pcm_armBreak.set(Value.kForward);
+    if (m_Xbox_Co_Drive.getLeftBumper() && bendySwitch.get()) {
+      m_armBase.set(-0.1);
     }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      pcm_armBreak.set(Value.kReverse);
+    else if (m_Xbox_Co_Drive.getRightBumper() && bendySwitch.get()) {
+      m_armBase.set(0.1);
     }
     else {
-      pcm_armBreak.set(Value.kOff);
+      m_armBase.set(0);
     }
-    System.out.println(bendySwitch.get());
+    if (m_Xbox_Co_Drive.getBButton()) {
+      m_armWinch.set(0.15);
+    }
+    else if (m_Xbox_Co_Drive.getAButton()) {
+      m_armWinch.set(-0.15);
+    }
+    else {
+      m_armWinch.set(0.0);
+    }
   }
 
   /** This function is called once when the robot is first started up. */
