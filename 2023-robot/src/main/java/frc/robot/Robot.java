@@ -106,15 +106,15 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+    double t = m_timer.get();
     double yaw = gyro.getYaw();
     if (onRamp == false) {
       m_Left.set(0.2);
       m_Right.set(0.2);
     }
-    else if (m_timer.get() < 15) {
-      System.out.println(yaw);
-      m_Left.set(yaw/100);
-      m_Right.set(yaw/100);
+    else if (m_timer.get() < 25) {
+      m_Left.set(yaw/(100+(t*2)));
+      m_Right.set(yaw/(100+(t*2)));
     }
     if (yaw > 10) {
       onRamp = true;
