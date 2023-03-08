@@ -33,6 +33,7 @@ public class Robot extends TimedRobot {
   double targetPosL = 0.0;
   double targetPosR = 0.0;
   boolean intakeMoving = false;
+  boolean onRamp = false;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -56,7 +57,7 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_Intake_Right = new CANSparkMax(8, MotorType.kBrushless);
 
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
-  private final AHRS gyro = new AHRS(I2C.Port.kMXP);
+  private final AHRS gyro = new AHRS(I2C.Port.kOnboard);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
   private final DigitalInput bendySwitch = new DigitalInput(0);
 
@@ -98,16 +99,25 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     m_timer.reset();
     m_timer.start();
+    gyro.zeroYaw();
+    onRamp = false;
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    if (m_timer.get() < 3.0) {
-      System.out.println("moving");
+    double yaw = gyro.getYaw();
+    if (onRamp == false) {
+      m_Left.set(0.2);
+      m_Right.set(0.2);
     }
-    else {
-      System.out.println("not moving");
+    else if (m_timer.get() < 15) {
+      System.out.println(yaw);
+      m_Left.set(yaw/100);
+      m_Right.set(yaw/100);
+    }
+    if (yaw > 10) {
+      onRamp = true;
     }
   }
 
