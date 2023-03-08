@@ -138,7 +138,7 @@ public class Robot extends TimedRobot {
 
     //movement v
     getY = -m_Joystick_Drive.getY();
-    getX = -m_Joystick_Drive.getX();
+    getX = -m_Joystick_Drive.getZ();
     
     //This speed line makes the robot accelerate to the Joystick's position
     //Which improves handling of the vehicle greatly.
@@ -154,7 +154,7 @@ public class Robot extends TimedRobot {
     //arm ebow
     armPos = m_armBase.getEncoder().getPosition();
 
-    double lowerLimit = 21;
+    double lowerLimit = 20;
     if (m_Xbox_Co_Drive.getRightBumper()) {
       armTarget  += 0.1;
       if (armTarget > lowerLimit) {
@@ -194,8 +194,8 @@ public class Robot extends TimedRobot {
       intakeMoving = true;
     }
     else if (m_Xbox_Co_Drive.getYButton()) {
-      m_Intake_Right.set(-0.2);
-      m_Intake_Left.set(-0.2);
+      m_Intake_Right.set(-0.6);
+      m_Intake_Left.set(-0.6);
       intakeMoving = true;
     }
     else {
