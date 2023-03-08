@@ -13,6 +13,10 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DigitalInput;
+
+import com.kauailabs.navx.frc.AHRS;
+import edu.wpi.first.wpilibj.I2C;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -26,6 +30,9 @@ public class Robot extends TimedRobot {
   Double getX = 0.0;
   Double speedY = 0.0;
   Double speedX = 0.0;
+  double targetPosL = 0.0;
+  double targetPosR = 0.0;
+  boolean intakeMoving = false;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -49,7 +56,9 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_Intake_Right = new CANSparkMax(8, MotorType.kBrushless);
 
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
+  private final AHRS gyro = new AHRS(I2C.Port.kMXP);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
+  private final DigitalInput bendySwitch = new DigitalInput(9);
 
   double armTarget = 0.0;
   double armSpeed = 0.0;
@@ -108,11 +117,16 @@ public class Robot extends TimedRobot {
     armTarget = 0;
     armSpeed = 0;
     m_armBase.getEncoder().setPosition(0);
+    intakeMoving = false;
+    targetPosL = m_Intake_Left.getEncoder().getPosition();
+    targetPosR = m_Intake_Right.getEncoder().getPosition();
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+
+    System.out.println(bendySwitch.get());
 
     //movement v
     getY = -m_Joystick_Drive.getY();
@@ -132,7 +146,7 @@ public class Robot extends TimedRobot {
     //arm ebow
     armPos = m_armBase.getEncoder().getPosition();
 
-    double lowerLimit = 20;
+    double lowerLimit = 21;
     if (m_Xbox_Co_Drive.getRightBumper()) {
       armTarget  += 0.1;
       if (armTarget > lowerLimit) {
@@ -147,7 +161,7 @@ public class Robot extends TimedRobot {
     }
 
     m_armBase.set((armTarget-armPos)/20);
-    System.out.println((armTarget-armPos)/20);
+    //System.out.println((armTarget-armPos)/20);
     //System.out.println(armPos);
     
     if (m_Xbox_Co_Drive.getRawButton(8)) {
@@ -169,16 +183,24 @@ public class Robot extends TimedRobot {
     if (m_Xbox_Co_Drive.getXButton()) {
       m_Intake_Right.set(0.2);
       m_Intake_Left.set(0.2);
+      intakeMoving = true;
     }
     else if (m_Xbox_Co_Drive.getYButton()) {
       m_Intake_Right.set(-0.2);
       m_Intake_Left.set(-0.2);
+      intakeMoving = true;
     }
     else {
-      m_Intake_Right.set(0);
-      m_Intake_Left.set(0);
+      double LPos = m_Intake_Left.getEncoder().getPosition();
+      double RPos = m_Intake_Right.getEncoder().getPosition();
+      if (intakeMoving == true) {
+        targetPosL = LPos;
+        targetPosR = RPos;
+      }
+      intakeMoving = false;
+      m_Intake_Right.set((targetPosR - RPos)/15);
+      m_Intake_Left.set((targetPosL - LPos)/15);
     }
-    //System.out.println(m_armBase.getEncoder().getPosition());
 
   }
 
@@ -195,12 +217,22 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
+    pcm_armBreak.set(Value.kOff);
   }
 
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
-    pcm_Compressor.enableDigital();
+    if (m_Xbox_Co_Drive.getRightBumper()) {
+      pcm_armBreak.set(Value.kForward);
+    }
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
+      pcm_armBreak.set(Value.kReverse);
+    }
+    else {
+      pcm_armBreak.set(Value.kOff);
+    }
+    System.out.println(bendySwitch.get());
   }
 
   /** This function is called once when the robot is first started up. */
