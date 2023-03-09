@@ -174,6 +174,7 @@ public class Robot extends TimedRobot {
     intakeMoving = false;
     targetPosL = m_Intake_Left.getEncoder().getPosition();
     targetPosR = m_Intake_Right.getEncoder().getPosition();
+    pcm_armBreak.set(Value.kOff);
   }
 
   /** This function is called periodically during operator control. */
@@ -214,14 +215,14 @@ public class Robot extends TimedRobot {
     armPos = m_armBase.getEncoder().getPosition();
 
     double lowerLimit = 20;
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      armTarget  += 0.1;
+    if (m_Xbox_Co_Drive.getRightTriggerAxis() > 0.05) {
+      armTarget  += m_Xbox_Co_Drive.getRightTriggerAxis()/7;
       if (armTarget > lowerLimit) {
         armTarget = lowerLimit;
       }
     }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      armTarget -= 0.1;
+    else if (m_Xbox_Co_Drive.getLeftTriggerAxis() > 0.05) {
+      armTarget -= m_Xbox_Co_Drive.getLeftTriggerAxis()/7;
       if (armTarget < -lowerLimit) {
         armTarget = -lowerLimit;
       }
@@ -236,10 +237,10 @@ public class Robot extends TimedRobot {
     }
 
     //arm length
-    if (m_Xbox_Co_Drive.getBButton()) {
+    if (m_Xbox_Co_Drive.getYButton()) {
       m_armWinch.set(0.15);
     }
-    else if (m_Xbox_Co_Drive.getAButton()) {
+    else if (m_Xbox_Co_Drive.getXButton()) {
       m_armWinch.set(-0.15);
     }
     else {
@@ -247,12 +248,12 @@ public class Robot extends TimedRobot {
     }
   
     //intake
-    if (m_Xbox_Co_Drive.getXButton()) {
+    if (m_Xbox_Co_Drive.getAButton()) {
       m_Intake_Right.set(0.2);
       m_Intake_Left.set(0.2);
       intakeMoving = true;
     }
-    else if (m_Xbox_Co_Drive.getYButton()) {
+    else if (m_Xbox_Co_Drive.getBButton()) {
       m_Intake_Right.set(-0.6);
       m_Intake_Left.set(-0.6);
       intakeMoving = true;
@@ -268,15 +269,15 @@ public class Robot extends TimedRobot {
       m_Intake_Right.set((targetPosR - RPos)/15);
       m_Intake_Left.set((targetPosL - LPos)/15);
     }
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      pcm_armBreak.set(Value.kForward);
-    }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      pcm_armBreak.set(Value.kReverse);
-    }
-    else {
-      pcm_armBreak.set(Value.kOff);
-    }
+    // if (m_Xbox_Co_Drive.getRightBumper()) {
+    //   pcm_armBreak.set(Value.kForward);
+    // }
+    // else if (m_Xbox_Co_Drive.getLeftBumper()) {
+    //   pcm_armBreak.set(Value.kReverse);
+    // }
+    // else {
+    //   pcm_armBreak.set(Value.kOff);
+    // }
 
   }
 
