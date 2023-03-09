@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableValue;
+
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.I2C;
 
@@ -67,7 +69,7 @@ public class Robot extends TimedRobot {
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
-  NetworkTableEntry ta = table.getEntry("ta");
+  NetworkTableEntry pipeline = table.getEntry("pipeline");
   double llx = tx.getDouble(0.0);
   double lly = ty.getDouble(0.0);
 
@@ -188,8 +190,23 @@ public class Robot extends TimedRobot {
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
-    
-    m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+
+    if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
+      m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+    }
+    else if(m_Joystick_Drive.getRawButton(5)) {
+      pipeline.setNumber(0);
+      m_Left.set(llx/50);
+      m_Right.set(llx/50);
+    }
+    else if(m_Joystick_Drive.getRawButton(6)) {
+      pipeline.setNumber(1);
+      m_Left.set(llx/50);
+      m_Right.set(llx/50);
+    }
+    else {
+      System.out.println("I'm a cool pro fortnite gamer B)");
+    }
     
     //xbox stuff v
   
@@ -300,8 +317,6 @@ public class Robot extends TimedRobot {
     else {
       m_armWinch.set(0.0);
     }
-    System.out.println(llx);
-    System.out.println(lly);
   }
 
   /** This function is called once when the robot is first started up. */
