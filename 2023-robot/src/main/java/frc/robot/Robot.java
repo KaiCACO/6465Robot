@@ -14,7 +14,9 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
-
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.I2C;
 
@@ -34,6 +36,7 @@ public class Robot extends TimedRobot {
   double targetPosR = 0.0;
   boolean intakeMoving = false;
   boolean onRamp = false;
+  double autonomousMode = 2;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -60,6 +63,13 @@ public class Robot extends TimedRobot {
   private final AHRS gyro = new AHRS(I2C.Port.kOnboard);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
   private final DigitalInput bendySwitch = new DigitalInput(0);
+
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  NetworkTableEntry tx = table.getEntry("tx");
+  NetworkTableEntry ty = table.getEntry("ty");
+  NetworkTableEntry ta = table.getEntry("ta");
+  double llx = tx.getDouble(0.0);
+  double lly = ty.getDouble(0.0);
 
   double armTarget = 0.0;
   double armSpeed = 0.0;
@@ -93,7 +103,10 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    llx = tx.getDouble(0.0);
+    lly = ty.getDouble(0.0);
+  }
   
   @Override
   public void autonomousInit() {
@@ -108,16 +121,45 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = m_timer.get();
     double yaw = gyro.getYaw();
-    if (onRamp == false) {
-      m_Left.set(0.2);
-      m_Right.set(0.2);
+    if (autonomousMode == 1) {
+      if (onRamp == false) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (m_timer.get() < 25) {
+        m_Left.set(yaw/(100+(t*2)));
+        m_Right.set(yaw/(100+(t*2)));
+      }
+      if (yaw > 10) {
+        onRamp = true;
+      }
     }
-    else if (m_timer.get() < 25) {
-      m_Left.set(yaw/(100+(t*2)));
-      m_Right.set(yaw/(100+(t*2)));
-    }
-    if (yaw > 10) {
-      onRamp = true;
+    else if (autonomousMode == 2) {
+      if (t < 0.4) {
+        m_Intake_Left.set(0.2);
+        m_Intake_Right.set(0.2);
+      }
+      else if (t < 1.5) {
+        m_armBase.set(-0.2);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 2.2) {
+        m_armBase.set(0);
+        m_Intake_Left.set(-0.2);
+        m_Intake_Right.set(-0.2);
+      }
+      else if (t < 3) {
+        m_Left.set(-0.2);
+        m_Right.set(-0.2);
+      }
+      else {
+        m_Left.set(0);
+        m_Right.set(0);
+        m_armBase.set(0);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
     }
   }
 
@@ -258,6 +300,8 @@ public class Robot extends TimedRobot {
     else {
       m_armWinch.set(0.0);
     }
+    System.out.println(llx);
+    System.out.println(lly);
   }
 
   /** This function is called once when the robot is first started up. */
