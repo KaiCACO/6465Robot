@@ -294,7 +294,8 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    pcm_armBreak.set(Value.kOff);
+    m_armBase.getEncoder().setPosition(0);
+    System.out.println("! Arm position set to 0 !");
   }
 
   /** This function is called periodically during test mode. */
