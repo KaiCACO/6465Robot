@@ -165,6 +165,59 @@ public class Robot extends TimedRobot {
           m_Left.set(0.2);
           m_Right.set(0.2);
         }
+        else if (m_timer.get() < 20) {
+          m_Left.set(yaw/(100+(t*3.2)));
+          m_Right.set(yaw/(100+(t*3.2)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        if (yaw > 12) {
+          onRamp = true;
+        }
+      }
+    }
+    //LEFT OF RAMP
+    else if(autonomousMode == 3) {
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if (t < 2.5) {
+        m_Left.set(-0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 4) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 5.2) {
+        m_Right.set(-0.2);
+        m_Left.set(0.2);
+      }
+      else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
         else if (m_timer.get() < 15) {
           m_Left.set(yaw/(100+(t*2.5)));
           m_Right.set(yaw/(100+(t*2.5)));
@@ -176,6 +229,90 @@ public class Robot extends TimedRobot {
         if (yaw > 10) {
           onRamp = true;
         }
+      }
+    }
+    //RIGHT OF RAMP
+    else if(autonomousMode == 4) {
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if (t < 2.5) {
+        m_Left.set(0.2);
+        m_Right.set(-0.2);
+      }
+      else if (t < 4) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 5.2) {
+        m_Right.set(0.2);
+        m_Left.set(-0.2);
+      }
+      else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
+        else if (m_timer.get() < 15) {
+          m_Left.set(yaw/(100+(t*2.5)));
+          m_Right.set(yaw/(100+(t*2.5)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        if (yaw > 10) {
+          onRamp = true;
+        }
+      }
+    }
+    else if(autonomousMode == 5) {
+
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if(t < 2.5) {
+        m_armBase.set(0);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else {
+        m_Left.set(0);
+        m_Right.set(0);
       }
     }
   }
@@ -208,7 +345,7 @@ public class Robot extends TimedRobot {
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
 
     if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
-      m_Drive.arcadeDrive(speedY, speedX/(1.2+(Math.abs(getY)*0.8)));
+      m_Drive.arcadeDrive(speedY, speedX/(1.3+(Math.abs(getY)*0.8)));
       targetRotationSpeed = 0;
     }
     else if(m_Joystick_Drive.getRawButton(5)) {
