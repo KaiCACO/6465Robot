@@ -38,6 +38,8 @@ public class Robot extends TimedRobot {
   double targetPosR = 0.0;
   boolean intakeMoving = false;
   boolean onRamp = false;
+  double targetRotationSpeed = 0.0;
+  //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
   double autonomousMode = 2;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
@@ -73,9 +75,9 @@ public class Robot extends TimedRobot {
   double llx = tx.getDouble(0.0);
   double lly = ty.getDouble(0.0);
 
-  double armTarget = 0.0;
-  double armSpeed = 0.0;
-  double armPos = 0.0;
+  double armTarget = 0.0000;
+  double armSpeed = 0.0000;
+  double armPos = 0.0000;
 
   private final Timer m_timer = new Timer();
 
@@ -156,11 +158,21 @@ public class Robot extends TimedRobot {
         m_Right.set(-0.2);
       }
       else {
-        m_Left.set(0);
-        m_Right.set(0);
         m_armBase.set(0);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
+        else if (m_timer.get() < 25) {
+          m_Left.set(yaw/(100+(t*2)));
+          m_Right.set(yaw/(100+(t*2)));
+        }
+        if (yaw > 10) {
+          onRamp = true;
+        }
       }
     }
   }
@@ -194,16 +206,26 @@ public class Robot extends TimedRobot {
 
     if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
       m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+      targetRotationSpeed = 0;
     }
     else if(m_Joystick_Drive.getRawButton(5)) {
       pipeline.setNumber(0);
-      m_Left.set(llx/50);
-      m_Right.set(llx/50);
+      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
+      if (targetRotationSpeed > 0.2) {
+        targetRotationSpeed = 0.2;
+      }
+      System.out.println(targetRotationSpeed);
+      m_Left.set(targetRotationSpeed);
+      m_Right.set(-targetRotationSpeed);
     }
     else if(m_Joystick_Drive.getRawButton(6)) {
       pipeline.setNumber(1);
-      m_Left.set(llx/50);
-      m_Right.set(llx/50);
+      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
+      if (targetRotationSpeed > 0.2) {
+        targetRotationSpeed = 0.2;
+      }
+      m_Left.set(targetRotationSpeed);
+      m_Right.set(-targetRotationSpeed);
     }
     else {
       System.out.println("I'm a cool pro fortnite gamer B)");
@@ -269,15 +291,15 @@ public class Robot extends TimedRobot {
       m_Intake_Right.set((targetPosR - RPos)/15);
       m_Intake_Left.set((targetPosL - LPos)/15);
     }
-    // if (m_Xbox_Co_Drive.getRightBumper()) {
-    //   pcm_armBreak.set(Value.kForward);
-    // }
-    // else if (m_Xbox_Co_Drive.getLeftBumper()) {
-    //   pcm_armBreak.set(Value.kReverse);
-    // }
-    // else {
-    //   pcm_armBreak.set(Value.kOff);
-    // }
+    if (m_Xbox_Co_Drive.getRightBumper()) {
+      pcm_armBreak.set(Value.kForward);
+    }
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
+      pcm_armBreak.set(Value.kReverse);
+    }
+    else {
+      pcm_armBreak.set(Value.kOff);
+    }
 
   }
 
