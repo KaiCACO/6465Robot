@@ -39,6 +39,7 @@ public class Robot extends TimedRobot {
   boolean intakeMoving = false;
   boolean onRamp = false;
   double targetRotationSpeed = 0.0;
+  boolean autoStop = false;
   //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
   int autonomousMode = 2;
 
@@ -156,7 +157,7 @@ public class Robot extends TimedRobot {
         m_Intake_Left.set(-0.8);
         m_Intake_Right.set(-0.8);
       }
-      else {
+      else if (autoStop == false) {
         m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
@@ -176,6 +177,11 @@ public class Robot extends TimedRobot {
         if (yaw > 12) {
           onRamp = true;
         }
+      }
+      if(t > 8 && onRamp == false) {
+        autoStop = true;
+        m_Left.set(0);
+        m_Right.set(0);
       }
     }
     //LEFT OF RAMP
