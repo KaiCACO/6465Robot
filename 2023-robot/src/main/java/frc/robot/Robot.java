@@ -139,26 +139,25 @@ public class Robot extends TimedRobot {
       }
     }
     else if (autonomousMode == 2) {
-      if (t < 0.4) {
-        m_Intake_Left.set(0.2);
-        m_Intake_Right.set(0.2);
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
       }
-      else if (t < 1.5) {
-        m_armBase.set(-0.2);
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
       }
-      else if (t < 2.2) {
-        m_armBase.set(0);
-        m_Intake_Left.set(-0.2);
-        m_Intake_Right.set(-0.2);
-      }
-      else if (t < 3) {
-        m_Left.set(-0.2);
-        m_Right.set(-0.2);
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
       }
       else {
-        m_armBase.set(0);
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
 
@@ -166,9 +165,13 @@ public class Robot extends TimedRobot {
           m_Left.set(0.2);
           m_Right.set(0.2);
         }
-        else if (m_timer.get() < 25) {
-          m_Left.set(yaw/(100+(t*2)));
-          m_Right.set(yaw/(100+(t*2)));
+        else if (m_timer.get() < 15) {
+          m_Left.set(yaw/(100+(t*2.5)));
+          m_Right.set(yaw/(100+(t*2.5)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
         }
         if (yaw > 10) {
           onRamp = true;
@@ -205,7 +208,7 @@ public class Robot extends TimedRobot {
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
 
     if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
-      m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+      m_Drive.arcadeDrive(speedY, speedX/(1.2+(Math.abs(getY)*0.8)));
       targetRotationSpeed = 0;
     }
     else if(m_Joystick_Drive.getRawButton(5)) {
@@ -214,7 +217,6 @@ public class Robot extends TimedRobot {
       if (targetRotationSpeed > 0.2) {
         targetRotationSpeed = 0.2;
       }
-      System.out.println(targetRotationSpeed);
       m_Left.set(targetRotationSpeed);
       m_Right.set(-targetRotationSpeed);
     }
