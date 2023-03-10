@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableValue;
+
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.I2C;
 
@@ -36,6 +38,8 @@ public class Robot extends TimedRobot {
   double targetPosR = 0.0;
   boolean intakeMoving = false;
   boolean onRamp = false;
+  double targetRotationSpeed = 0.0;
+  //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
   double autonomousMode = 2;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
@@ -67,13 +71,13 @@ public class Robot extends TimedRobot {
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
-  NetworkTableEntry ta = table.getEntry("ta");
+  NetworkTableEntry pipeline = table.getEntry("pipeline");
   double llx = tx.getDouble(0.0);
   double lly = ty.getDouble(0.0);
 
-  double armTarget = 0.0;
-  double armSpeed = 0.0;
-  double armPos = 0.0;
+  double armTarget = 0.0000;
+  double armSpeed = 0.0000;
+  double armPos = 0.0000;
 
   private final Timer m_timer = new Timer();
 
@@ -135,30 +139,180 @@ public class Robot extends TimedRobot {
       }
     }
     else if (autonomousMode == 2) {
-      if (t < 0.4) {
-        m_Intake_Left.set(0.2);
-        m_Intake_Right.set(0.2);
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
       }
-      else if (t < 1.5) {
-        m_armBase.set(-0.2);
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
       }
-      else if (t < 2.2) {
-        m_armBase.set(0);
-        m_Intake_Left.set(-0.2);
-        m_Intake_Right.set(-0.2);
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
       }
-      else if (t < 3) {
+      else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
+        else if (m_timer.get() < 20) {
+          m_Left.set(yaw/(100+(t*3.2)));
+          m_Right.set(yaw/(100+(t*3.2)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        if (yaw > 12) {
+          onRamp = true;
+        }
+      }
+    }
+    //LEFT OF RAMP
+    else if(autonomousMode == 3) {
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if (t < 2.5) {
         m_Left.set(-0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 4) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 5.2) {
         m_Right.set(-0.2);
+        m_Left.set(0.2);
+      }
+      else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
+        else if (m_timer.get() < 15) {
+          m_Left.set(yaw/(100+(t*2.5)));
+          m_Right.set(yaw/(100+(t*2.5)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        if (yaw > 10) {
+          onRamp = true;
+        }
+      }
+    }
+    //RIGHT OF RAMP
+    else if(autonomousMode == 4) {
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if (t < 2.5) {
+        m_Left.set(0.2);
+        m_Right.set(-0.2);
+      }
+      else if (t < 4) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 5.2) {
+        m_Right.set(0.2);
+        m_Left.set(-0.2);
+      }
+      else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+
+        if (onRamp == false) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+        }
+        else if (m_timer.get() < 15) {
+          m_Left.set(yaw/(100+(t*2.5)));
+          m_Right.set(yaw/(100+(t*2.5)));
+        }
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        if (yaw > 10) {
+          onRamp = true;
+        }
+      }
+    }
+    else if(autonomousMode == 5) {
+
+      if (t < 0.2) {
+        m_armBase.getEncoder().setPosition(0);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.8);
+        m_Intake_Right.set(-0.8);
+      }
+      else if(t < 2.5) {
+        m_armBase.set(0);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+        m_Left.set(0.2);
+        m_Right.set(0.2);
       }
       else {
         m_Left.set(0);
         m_Right.set(0);
-        m_armBase.set(0);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
       }
     }
   }
@@ -172,6 +326,7 @@ public class Robot extends TimedRobot {
     intakeMoving = false;
     targetPosL = m_Intake_Left.getEncoder().getPosition();
     targetPosR = m_Intake_Right.getEncoder().getPosition();
+    pcm_armBreak.set(Value.kOff);
   }
 
   /** This function is called periodically during operator control. */
@@ -188,8 +343,32 @@ public class Robot extends TimedRobot {
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
-    
-    m_Drive.arcadeDrive(speedY/1.2, speedX/(1.2+(Math.abs(getY)*0.8)));
+
+    if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
+      m_Drive.arcadeDrive(speedY, speedX/(1.3+(Math.abs(getY)*0.8)));
+      targetRotationSpeed = 0;
+    }
+    else if(m_Joystick_Drive.getRawButton(5)) {
+      pipeline.setNumber(0);
+      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
+      if (targetRotationSpeed > 0.2) {
+        targetRotationSpeed = 0.2;
+      }
+      m_Left.set(targetRotationSpeed);
+      m_Right.set(-targetRotationSpeed);
+    }
+    else if(m_Joystick_Drive.getRawButton(6)) {
+      pipeline.setNumber(1);
+      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
+      if (targetRotationSpeed > 0.2) {
+        targetRotationSpeed = 0.2;
+      }
+      m_Left.set(targetRotationSpeed);
+      m_Right.set(-targetRotationSpeed);
+    }
+    else {
+      System.out.println("I'm a cool pro fortnite gamer B)");
+    }
     
     //xbox stuff v
   
@@ -197,14 +376,14 @@ public class Robot extends TimedRobot {
     armPos = m_armBase.getEncoder().getPosition();
 
     double lowerLimit = 20;
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      armTarget  += 0.1;
+    if (m_Xbox_Co_Drive.getRightTriggerAxis() > 0.05) {
+      armTarget  += m_Xbox_Co_Drive.getRightTriggerAxis()/7;
       if (armTarget > lowerLimit) {
         armTarget = lowerLimit;
       }
     }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      armTarget -= 0.1;
+    else if (m_Xbox_Co_Drive.getLeftTriggerAxis() > 0.05) {
+      armTarget -= m_Xbox_Co_Drive.getLeftTriggerAxis()/7;
       if (armTarget < -lowerLimit) {
         armTarget = -lowerLimit;
       }
@@ -219,10 +398,10 @@ public class Robot extends TimedRobot {
     }
 
     //arm length
-    if (m_Xbox_Co_Drive.getBButton()) {
+    if (m_Xbox_Co_Drive.getYButton()) {
       m_armWinch.set(0.15);
     }
-    else if (m_Xbox_Co_Drive.getAButton()) {
+    else if (m_Xbox_Co_Drive.getXButton()) {
       m_armWinch.set(-0.15);
     }
     else {
@@ -230,12 +409,12 @@ public class Robot extends TimedRobot {
     }
   
     //intake
-    if (m_Xbox_Co_Drive.getXButton()) {
+    if (m_Xbox_Co_Drive.getAButton()) {
       m_Intake_Right.set(0.2);
       m_Intake_Left.set(0.2);
       intakeMoving = true;
     }
-    else if (m_Xbox_Co_Drive.getYButton()) {
+    else if (m_Xbox_Co_Drive.getBButton()) {
       m_Intake_Right.set(-0.6);
       m_Intake_Left.set(-0.6);
       intakeMoving = true;
@@ -276,7 +455,8 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    pcm_armBreak.set(Value.kOff);
+    m_armBase.getEncoder().setPosition(0);
+    System.out.println("! Arm position set to 0 !");
   }
 
   /** This function is called periodically during test mode. */
@@ -300,8 +480,6 @@ public class Robot extends TimedRobot {
     else {
       m_armWinch.set(0.0);
     }
-    System.out.println(llx);
-    System.out.println(lly);
   }
 
   /** This function is called once when the robot is first started up. */
