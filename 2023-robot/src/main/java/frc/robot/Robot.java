@@ -178,7 +178,7 @@ public class Robot extends TimedRobot {
           onRamp = true;
         }
       }
-      if(t > 8 && onRamp == false) {
+      if(t > 5 && onRamp == false) {
         autoStop = true;
         m_Left.set(0);
         m_Right.set(0);
