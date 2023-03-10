@@ -40,7 +40,7 @@ public class Robot extends TimedRobot {
   boolean onRamp = false;
   double targetRotationSpeed = 0.0;
   //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
-  double autonomousMode = 2;
+  int autonomousMode = 2;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -166,8 +166,8 @@ public class Robot extends TimedRobot {
           m_Right.set(0.2);
         }
         else if (m_timer.get() < 20) {
-          m_Left.set(yaw/(100+(t*3.2)));
-          m_Right.set(yaw/(100+(t*3.2)));
+          m_Left.set(yaw/(100+(t*3.1)));
+          m_Right.set(yaw/(100+(t*3.1)));
         }
         else {
           m_Left.set(0);
