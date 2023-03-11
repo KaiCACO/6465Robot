@@ -133,8 +133,8 @@ public class Robot extends TimedRobot {
         m_Right.set(0.2);
       }
       else if (m_timer.get() < 25) {
-        m_Left.set(yaw/(100+(t*2)));
-        m_Right.set(yaw/(100+(t*2)));
+        m_Left.set(yaw/(80+(t*2)));
+        m_Right.set(yaw/(80+(t*2)));
       }
       if (yaw > 10) {
         onRamp = true;
@@ -208,7 +208,7 @@ public class Robot extends TimedRobot {
         m_Left.set(-0.2);
         m_Right.set(0.2);
       }
-      else if (t < 4) {
+      else if (t < 5) {
         m_Left.set(0.2);
         m_Right.set(0.2);
       }
@@ -334,6 +334,7 @@ public class Robot extends TimedRobot {
     targetPosL = m_Intake_Left.getEncoder().getPosition();
     targetPosR = m_Intake_Right.getEncoder().getPosition();
     pcm_armBreak.set(Value.kOff);
+    autoStop = false;
   }
 
   /** This function is called periodically during operator control. */
@@ -380,23 +381,29 @@ public class Robot extends TimedRobot {
     //xbox stuff v
   
     //arm ebow
+    if (m_Xbox_Co_Drive.getPOV() == 0) {
+      m_armBase.getEncoder().setPosition(0);
+      armTarget = 0;
+      System.out.println("set this position to 0");
+    }
+
     armPos = m_armBase.getEncoder().getPosition();
 
     double lowerLimit = 20;
     if (m_Xbox_Co_Drive.getRightTriggerAxis() > 0.05) {
       armTarget  += m_Xbox_Co_Drive.getRightTriggerAxis()/7;
-      if (armTarget > lowerLimit) {
+      if (armTarget > lowerLimit && m_Xbox_Co_Drive.getRightBumper() == false) {
         armTarget = lowerLimit;
       }
     }
     else if (m_Xbox_Co_Drive.getLeftTriggerAxis() > 0.05) {
       armTarget -= m_Xbox_Co_Drive.getLeftTriggerAxis()/7;
-      if (armTarget < -lowerLimit) {
+      if (armTarget < -lowerLimit && m_Xbox_Co_Drive.getRightBumper() == false) {
         armTarget = -lowerLimit;
       }
     }
 
-    m_armBase.set((armTarget-armPos)/20);
+    m_armBase.set((armTarget-armPos)/15);
     //System.out.println((armTarget-armPos)/20);
     //System.out.println(armPos);
     
