@@ -41,7 +41,7 @@ public class Robot extends TimedRobot {
   double targetRotationSpeed = 0.0;
   boolean autoStop = false;
   //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
-  int autonomousMode = 2;
+  int autonomousMode = 5;
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -291,7 +291,10 @@ public class Robot extends TimedRobot {
         }
       }
     }
+
+    // RIGHT OF RAMP, NO BALANCE  
     else if(autonomousMode == 5) {
+      System.out.println(t);
 
       if (t < 0.2) {
         m_armBase.getEncoder().setPosition(0);
@@ -305,19 +308,32 @@ public class Robot extends TimedRobot {
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
       }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -4.0) {
         m_armBase.set(0.2);
         m_Intake_Left.set(-0.8);
         m_Intake_Right.set(-0.8);
       }
-      else if(t < 2.5) {
+      else if(t < 2.1 && t > 1.8) {
         m_armBase.set(0);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
+        m_Left.set(0.1);
+        m_Right.set(-0.1);
+      }
+      else if (t < 2.9) {
+        m_Left.set(0.2);
+        m_Right.set(0.2);
+      }
+      else if (t < 3.2) {
+        m_Left.set(-0.1);
+        m_Right.set(0.1);
+      }
+      else if (t < 7.2) {
         m_Left.set(0.2);
         m_Right.set(0.2);
       }
       else {
+        m_armBase.set(-m_armBase.getEncoder().getPosition()/20);
         m_Left.set(0);
         m_Right.set(0);
       }
@@ -403,7 +419,7 @@ public class Robot extends TimedRobot {
       }
     }
 
-    m_armBase.set((armTarget-armPos)/15);
+    m_armBase.set((armTarget-armPos)/21);
     //System.out.println((armTarget-armPos)/20);
     //System.out.println(armPos);
     
@@ -469,8 +485,10 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    m_armBase.getEncoder().setPosition(0);
-    System.out.println("! Arm position set to 0 !");
+    m_timer.reset();
+    m_timer.start();
+    m_Left.set(0.2);
+    m_Right.set(0.2);
   }
 
   /** This function is called periodically during test mode. */
@@ -493,6 +511,10 @@ public class Robot extends TimedRobot {
     }
     else {
       m_armWinch.set(0.0);
+    }
+    if (m_timer.get() > 10) {
+      m_Left.set(0);
+      m_Right.set(0);
     }
   }
 
