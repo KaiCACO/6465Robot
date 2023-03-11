@@ -119,6 +119,7 @@ public class Robot extends TimedRobot {
     m_timer.start();
     gyro.zeroYaw();
     onRamp = false;
+    autoStop = false;
   }
 
   /** This function is called periodically during autonomous. */
@@ -178,7 +179,7 @@ public class Robot extends TimedRobot {
           onRamp = true;
         }
       }
-      if(t > 5 && onRamp == false) {
+      if(t > 4 && onRamp == false) {
         autoStop = true;
         m_Left.set(0);
         m_Right.set(0);
