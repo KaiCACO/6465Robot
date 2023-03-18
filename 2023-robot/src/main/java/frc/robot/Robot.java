@@ -18,6 +18,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
+import edu.wpi.first.wpilibj.DriverStation;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.I2C;
@@ -41,7 +42,18 @@ public class Robot extends TimedRobot {
   double targetRotationSpeed = 0.0;
   boolean autoStop = false;
   //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
-  int autonomousMode = 5;
+
+  //----------------------------
+  //SET AUTOLOCATION HERE vv
+
+  String autolocation = "left";
+  //options: "left", "middle", "right"
+
+  //SET AUTOLOCATION HERE ^^
+  //----------------------------
+
+
+  String alliance = DriverStation.getAlliance().name();
 
   private final Joystick m_Joystick_Drive = new Joystick(0);
   private final XboxController m_Xbox_Co_Drive = new XboxController(1);
@@ -66,7 +78,7 @@ public class Robot extends TimedRobot {
 
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final AHRS gyro = new AHRS(I2C.Port.kOnboard);
-  private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 0, 1);
+  private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 1, 0);
   private final DigitalInput bendySwitch = new DigitalInput(0);
 
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
@@ -81,6 +93,7 @@ public class Robot extends TimedRobot {
   double armPos = 0.0000;
 
   private final Timer m_timer = new Timer();
+  private final Timer m_timer2 = new Timer();
 
 
   /**
@@ -127,20 +140,9 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = m_timer.get();
     double yaw = gyro.getYaw();
-    if (autonomousMode == 1) {
-      if (onRamp == false) {
-        m_Left.set(0.2);
-        m_Right.set(0.2);
-      }
-      else if (m_timer.get() < 25) {
-        m_Left.set(yaw/(80+(t*2)));
-        m_Right.set(yaw/(80+(t*2)));
-      }
-      if (yaw > 10) {
-        onRamp = true;
-      }
-    }
-    else if (autonomousMode == 2) {
+
+    //MIDDLE, BALANCE
+    if (autolocation == "middle") {
       if (t < 0.2) {
         m_armBase.getEncoder().setPosition(0);
         m_Left.set(0);
@@ -167,26 +169,32 @@ public class Robot extends TimedRobot {
           m_Left.set(0.2);
           m_Right.set(0.2);
         }
-        else if (m_timer.get() < 20) {
-          m_Left.set(yaw/(100+(t*3.1)));
-          m_Right.set(yaw/(100+(t*3.1)));
+        else if (m_timer2.get() < 1.9) {
+          m_Left.set(yaw/(70));
+          m_Right.set(yaw/(70));
+        }
+        else if (m_timer.get() < 8.0) {
+          m_Left.set(yaw/(49+(t*17)));
+          m_Right.set(yaw/(49+(t*17)));
         }
         else {
           m_Left.set(0);
           m_Right.set(0);
         }
-        if (yaw > 12) {
+        if (yaw > 12 && onRamp == false) {
           onRamp = true;
+          m_timer2.reset();
+          m_timer2.start();
         }
       }
-      if(t > 4 && onRamp == false) {
+      if(t > 8 && onRamp == false) {
         autoStop = true;
         m_Left.set(0);
         m_Right.set(0);
       }
     }
-    //LEFT OF RAMP
-    else if(autonomousMode == 3) {
+    //LEFT OF RAMP, RAMP SIDE
+    else if(autolocation == "left" && alliance == "Red") {
       if (t < 0.2) {
         m_armBase.getEncoder().setPosition(0);
         m_Left.set(0);
@@ -238,8 +246,8 @@ public class Robot extends TimedRobot {
         }
       }
     }
-    //RIGHT OF RAMP
-    else if(autonomousMode == 4) {
+    //RIGHT OF RAMP, SPACE SIDE
+    else if(autolocation == "right" && alliance == "Red") {
       if (t < 0.2) {
         m_armBase.getEncoder().setPosition(0);
         m_Left.set(0);
@@ -279,8 +287,8 @@ public class Robot extends TimedRobot {
           m_Right.set(0.2);
         }
         else if (m_timer.get() < 15) {
-          m_Left.set(yaw/(100+(t*2.5)));
-          m_Right.set(yaw/(100+(t*2.5)));
+          m_Left.set(yaw/(60+(t*3)));
+          m_Right.set(yaw/(60+(t*3)));
         }
         else {
           m_Left.set(0);
@@ -291,52 +299,13 @@ public class Robot extends TimedRobot {
         }
       }
     }
+    //LEFT OF RAMP, SPACE SIDE
+    else if(autolocation == "left" && alliance == "Blue") {
 
-    // RIGHT OF RAMP, NO BALANCE  
-    else if(autonomousMode == 5) {
-      System.out.println(t);
+    }
+    //RIGHT OF RAMP, RAMP SIDE
+    else if(autolocation == "right" && alliance  == "Blue") {
 
-      if (t < 0.2) {
-        m_armBase.getEncoder().setPosition(0);
-        m_Left.set(0);
-        m_Right.set(0);
-        m_Intake_Left.set(0.1);
-        m_Intake_Right.set(0.1);
-      }
-      else if (t < 1.0) {
-        m_armBase.set(-0.1);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-      }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -4.0) {
-        m_armBase.set(0.2);
-        m_Intake_Left.set(-0.8);
-        m_Intake_Right.set(-0.8);
-      }
-      else if(t < 2.1 && t > 1.8) {
-        m_armBase.set(0);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-        m_Left.set(0.1);
-        m_Right.set(-0.1);
-      }
-      else if (t < 2.9) {
-        m_Left.set(0.2);
-        m_Right.set(0.2);
-      }
-      else if (t < 3.2) {
-        m_Left.set(-0.1);
-        m_Right.set(0.1);
-      }
-      else if (t < 7.2) {
-        m_Left.set(0.2);
-        m_Right.set(0.2);
-      }
-      else {
-        m_armBase.set(-m_armBase.getEncoder().getPosition()/20);
-        m_Left.set(0);
-        m_Right.set(0);
-      }
     }
   }
 
@@ -358,40 +327,43 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
 
     //movement v
+
     getY = -m_Joystick_Drive.getY();
     getX = -m_Joystick_Drive.getZ();
     
     //This speed line makes the robot accelerate to the Joystick's position
     //Which improves handling of the vehicle greatly.
     speedY = speedY + (getY - speedY)/18;
+
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
     speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
 
-    if (!(m_Joystick_Drive.getRawButton(5) || m_Joystick_Drive.getRawButton(6))) {
-      m_Drive.arcadeDrive(speedY, speedX/(1.3+(Math.abs(getY)*0.8)));
+    //Targeting system (targets cones and cubes)
+    if (!(m_Joystick_Drive.getRawButton(1))) {
+      m_Drive.arcadeDrive(speedY*1.1, speedX/(1.3+(Math.abs(getY)*0.8)));
       targetRotationSpeed = 0;
     }
-    else if(m_Joystick_Drive.getRawButton(5)) {
-      pipeline.setNumber(0);
-      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
-      if (targetRotationSpeed > 0.2) {
-        targetRotationSpeed = 0.2;
-      }
-      m_Left.set(targetRotationSpeed);
-      m_Right.set(-targetRotationSpeed);
-    }
-    else if(m_Joystick_Drive.getRawButton(6)) {
-      pipeline.setNumber(1);
-      targetRotationSpeed = targetRotationSpeed+(((llx/2000)-targetRotationSpeed)/20);
-      if (targetRotationSpeed > 0.2) {
-        targetRotationSpeed = 0.2;
-      }
-      m_Left.set(targetRotationSpeed);
-      m_Right.set(-targetRotationSpeed);
-    }
+
     else {
-      System.out.println("I'm a cool pro fortnite gamer B)");
+
+      if(m_Joystick_Drive.getRawButton(5)) {
+        pipeline.setNumber(0);
+        targetRotationSpeed = targetRotationSpeed+(((llx/200)-targetRotationSpeed)/20);
+        if (targetRotationSpeed > 0.2) {
+          targetRotationSpeed = 0.2;
+        }
+      }
+      else if(m_Joystick_Drive.getRawButton(6)) {
+        pipeline.setNumber(1);
+        targetRotationSpeed = targetRotationSpeed+(((llx/200)-targetRotationSpeed)/20);
+        if (targetRotationSpeed > 0.2) {
+          targetRotationSpeed = 0.2;
+        }
+      }
+      m_Left.set(targetRotationSpeed);
+      m_Right.set(-targetRotationSpeed);
+
     }
     
     //xbox stuff v
@@ -429,10 +401,10 @@ public class Robot extends TimedRobot {
 
     //arm length
     if (m_Xbox_Co_Drive.getYButton()) {
-      m_armWinch.set(0.15);
+      m_armWinch.set(0.3);
     }
     else if (m_Xbox_Co_Drive.getXButton()) {
-      m_armWinch.set(-0.15);
+      m_armWinch.set(-0.3);
     }
     else {
       m_armWinch.set(0.0);
@@ -445,8 +417,8 @@ public class Robot extends TimedRobot {
       intakeMoving = true;
     }
     else if (m_Xbox_Co_Drive.getBButton()) {
-      m_Intake_Right.set(-0.6);
-      m_Intake_Left.set(-0.6);
+      m_Intake_Right.set(-0.45);
+      m_Intake_Left.set(-0.45);
       intakeMoving = true;
     }
     else {
@@ -485,36 +457,21 @@ public class Robot extends TimedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    m_timer.reset();
-    m_timer.start();
-    m_Left.set(0.2);
-    m_Right.set(0.2);
+    m_Left.set(0);
+    m_Right.set(0);
   }
 
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
-    if (m_Xbox_Co_Drive.getLeftBumper() && bendySwitch.get()) {
-      m_armBase.set(-0.1);
+    if (m_Xbox_Co_Drive.getRightBumper() && bendySwitch.get()) {
+      pcm_armBreak.set(Value.kForward);
     }
-    else if (m_Xbox_Co_Drive.getRightBumper() && bendySwitch.get()) {
-      m_armBase.set(0.1);
-    }
-    else {
-      m_armBase.set(0);
-    }
-    if (m_Xbox_Co_Drive.getBButton()) {
-      m_armWinch.set(0.15);
-    }
-    else if (m_Xbox_Co_Drive.getAButton()) {
-      m_armWinch.set(-0.15);
+    else if (m_Xbox_Co_Drive.getLeftBumper() && bendySwitch.get()) {
+      pcm_armBreak.set(Value.kReverse);
     }
     else {
-      m_armWinch.set(0.0);
-    }
-    if (m_timer.get() > 10) {
-      m_Left.set(0);
-      m_Right.set(0);
+      pcm_armBreak.set(Value.kOff);
     }
   }
 
