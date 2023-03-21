@@ -332,14 +332,19 @@ public class Robot extends TimedRobot {
 
     getY = -m_Joystick_Drive.getY();
     getX = -m_Joystick_Drive.getZ();
+
+    var jswitch = m_Joystick_Drive.getRawAxis(3);
     
     //This speed line makes the robot accelerate to the Joystick's position
     //Which improves handling of the vehicle greatly.
-    speedY = speedY + (getY - speedY)/18;
+    speedY = speedY + (getY - speedY)/(45/((jswitch*-1+2)*2.6));
 
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
-    speedX = speedX + (getX - speedX)/((18+(Math.abs(getY)*10))/((m_Joystick_Drive.getRawAxis(4)*-1+2))*7);
+
+    var divisionFunction = ((45+(Math.abs(getY)*10))/((jswitch*-1+2)*2.6));
+
+    speedX = speedX + (getX - speedX)/divisionFunction;
 
     //Targeting system (targets cones and cubes)
     if (!(m_Joystick_Drive.getRawButton(1))) {
