@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.Compressor;
@@ -46,7 +47,7 @@ public class Robot extends TimedRobot {
   //----------------------------
   //SET AUTOLOCATION HERE vv
 
-  String autolocation = "left";
+  String autolocation = "middle";
   //options: "left", "middle", "right"
 
   //SET AUTOLOCATION HERE ^^
@@ -109,7 +110,7 @@ public class Robot extends TimedRobot {
     m_Intake_Left.setInverted(true);
     m_Intake_Right.setInverted(false);
     pcm_Compressor.enableDigital();
-    pcm_armBreak.set(Value.kOff);
+    pcm_armBreak.set(Value.kReverse);
 
   }
 
@@ -133,6 +134,9 @@ public class Robot extends TimedRobot {
     gyro.zeroYaw();
     onRamp = false;
     autoStop = false;
+    pcm_armBreak.set(Value.kReverse);
+    m_armBase.getEncoder().setPosition(0);
+
   }
 
   /** This function is called periodically during autonomous. */
@@ -144,7 +148,6 @@ public class Robot extends TimedRobot {
     //MIDDLE, BALANCE
     if (autolocation == "middle") {
       if (t < 0.2) {
-        m_armBase.getEncoder().setPosition(0);
         m_Left.set(0);
         m_Right.set(0);
         m_Intake_Left.set(0.1);
@@ -155,13 +158,13 @@ public class Robot extends TimedRobot {
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
       }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
+      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < 0.0) {
         m_armBase.set(0.2);
         m_Intake_Left.set(-0.8);
         m_Intake_Right.set(-0.8);
       }
       else if (autoStop == false) {
-        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
+        pcm_armBreak.set(Value.kForward);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
 
@@ -278,7 +281,6 @@ public class Robot extends TimedRobot {
         m_Left.set(-0.2);
       }
       else {
-        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
 
@@ -318,7 +320,7 @@ public class Robot extends TimedRobot {
     intakeMoving = false;
     targetPosL = m_Intake_Left.getEncoder().getPosition();
     targetPosR = m_Intake_Right.getEncoder().getPosition();
-    pcm_armBreak.set(Value.kOff);
+    pcm_armBreak.set(Value.kReverse);
     autoStop = false;
   }
 
@@ -337,7 +339,7 @@ public class Robot extends TimedRobot {
 
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
-    speedX = speedX + (getX - speedX)/(18+(Math.abs(getY)*10));
+    speedX = speedX + (getX - speedX)/((18+(Math.abs(getY)*10))/((m_Joystick_Drive.getRawAxis(4)*-1+2))*7);
 
     //Targeting system (targets cones and cubes)
     if (!(m_Joystick_Drive.getRawButton(1))) {
@@ -369,11 +371,6 @@ public class Robot extends TimedRobot {
     //xbox stuff v
   
     //arm ebow
-    if (m_Xbox_Co_Drive.getPOV() == 0) {
-      m_armBase.getEncoder().setPosition(0);
-      armTarget = 0;
-      System.out.println("set this position to 0");
-    }
 
     armPos = m_armBase.getEncoder().getPosition();
 
@@ -391,9 +388,13 @@ public class Robot extends TimedRobot {
       }
     }
 
-    m_armBase.set((armTarget-armPos)/21);
-    //System.out.println((armTarget-armPos)/20);
-    //System.out.println(armPos);
+    if(Math.abs(armTarget-armPos) < 0.15) {
+      pcm_armBreak.set(Value.kForward);
+    }
+    else {
+      pcm_armBreak.set(Value.kReverse);
+      m_armBase.set((armTarget-armPos)/18);
+    }
     
     if (m_Xbox_Co_Drive.getRawButton(8)) {
       armTarget = 0;
@@ -432,14 +433,15 @@ public class Robot extends TimedRobot {
       m_Intake_Right.set((targetPosR - RPos)/15);
       m_Intake_Left.set((targetPosL - LPos)/15);
     }
-    if (m_Xbox_Co_Drive.getRightBumper()) {
-      pcm_armBreak.set(Value.kForward);
-    }
-    else if (m_Xbox_Co_Drive.getLeftBumper()) {
-      pcm_armBreak.set(Value.kReverse);
+
+    //arm origin
+    if (m_Xbox_Co_Drive.getPOV() == 0) {
+      m_armBase.getEncoder().setPosition(0);
+      armTarget = 0;
+      m_Xbox_Co_Drive.setRumble(RumbleType.kBothRumble, 0.1);
     }
     else {
-      pcm_armBreak.set(Value.kOff);
+      m_Xbox_Co_Drive.setRumble(RumbleType.kBothRumble, 0);
     }
 
   }
@@ -447,7 +449,7 @@ public class Robot extends TimedRobot {
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {
-    m_timer.reset();
+    pcm_armBreak.set(Value.kForward);
   }
 
   /** This function is called periodically when disabled. */
@@ -464,10 +466,10 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
-    if (m_Xbox_Co_Drive.getRightBumper() && bendySwitch.get()) {
+    if (m_Xbox_Co_Drive.getRightBumper()) {
       pcm_armBreak.set(Value.kForward);
     }
-    else if (m_Xbox_Co_Drive.getLeftBumper() && bendySwitch.get()) {
+    else if (m_Xbox_Co_Drive.getLeftBumper()) {
       pcm_armBreak.set(Value.kReverse);
     }
     else {
