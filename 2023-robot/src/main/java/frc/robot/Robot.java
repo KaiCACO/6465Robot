@@ -21,6 +21,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.DriverStation;
 
+import java.sql.Array;
+
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.I2C;
 
@@ -42,16 +44,7 @@ public class Robot extends TimedRobot {
   boolean onRamp = false;
   double targetRotationSpeed = 0.0;
   boolean autoStop = false;
-  //automode 1: place cube behind robot; automode 2: place cube behind robot and move forward and balance on ramp
-
-  //----------------------------
-  //SET AUTOLOCATION HERE vv
-
   String autolocation = "middle";
-  //options: "left", "middle", "right"
-
-  //SET AUTOLOCATION HERE ^^
-  //----------------------------
 
 
   String alliance = DriverStation.getAlliance().name();
@@ -80,21 +73,31 @@ public class Robot extends TimedRobot {
   private final Compressor pcm_Compressor = new Compressor(0, PneumaticsModuleType.CTREPCM);
   private final AHRS gyro = new AHRS(I2C.Port.kOnboard);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 1, 0);
+  private final DoubleSolenoid pcm_llcontrol = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 3, 2);
   private final DigitalInput bendySwitch = new DigitalInput(0);
 
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
   NetworkTableEntry ty = table.getEntry("ty");
+  NetworkTableEntry tagPos = table.getEntry("camerapose_targetspace");
   NetworkTableEntry pipeline = table.getEntry("pipeline");
   double llx = tx.getDouble(0.0);
   double lly = ty.getDouble(0.0);
+  double[] lltagPos = tagPos.getDoubleArray(new double[6]);
 
   double armTarget = 0.0000;
   double armSpeed = 0.0000;
   double armPos = 0.0000;
+  Boolean llpos = true;
+  Boolean llbtn = false;
+  Boolean offRamp = false;
+  Boolean backOnRamp = false;
 
   private final Timer m_timer = new Timer();
-  private final Timer m_timer2 = new Timer();
+  private final Timer m_rampTimer = new Timer();
+  private final Timer m_rampOffTimer = new Timer();
+  private final Timer m_onRampAgainTimer = new Timer();
+  private final Timer m_sideTimer = new Timer();
 
 
   /**
@@ -111,6 +114,7 @@ public class Robot extends TimedRobot {
     m_Intake_Right.setInverted(false);
     pcm_Compressor.enableDigital();
     pcm_armBreak.set(Value.kReverse);
+    pcm_llcontrol.set(Value.kForward);
 
   }
 
@@ -131,11 +135,17 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     m_timer.reset();
     m_timer.start();
+    m_rampOffTimer.reset();
+    m_rampOffTimer.stop();
+    m_rampTimer.reset();
+    m_rampTimer.stop();
     gyro.zeroYaw();
     onRamp = false;
     autoStop = false;
     pcm_armBreak.set(Value.kReverse);
+    pcm_llcontrol.set(Value.kForward);
     m_armBase.getEncoder().setPosition(0);
+    offRamp = false;
 
   }
 
@@ -144,170 +154,116 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = m_timer.get();
     double yaw = gyro.getYaw();
+    System.out.println(m_rampTimer.get()); 
 
     //MIDDLE, BALANCE
-    if (autolocation == "middle") {
-      if (t < 0.2) {
+    if (autolocation == "middle" && !autoStop) {
+      //intake cube a little
+      if (t < 0.28) {
         m_Left.set(0);
         m_Right.set(0);
-        m_Intake_Left.set(0.1);
-        m_Intake_Right.set(0.1);
+        m_Intake_Left.set(0.28);
+        m_Intake_Right.set(0.28);
       }
+      //bring arm back
       else if (t < 1.0) {
         m_armBase.set(-0.1);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
       }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < 0.0) {
+      //outtake and move arm back up
+      else if (t < 2.5 && m_armBase.getEncoder().getPosition() < 15) {
         m_armBase.set(0.2);
         m_Intake_Left.set(-0.8);
         m_Intake_Right.set(-0.8);
+        m_Left.set(0);
+        m_Right.set(0);
       }
-      else if (autoStop == false) {
+      else if (!autoStop) {
+        //break arm
+        m_armBase.set(0);
         pcm_armBreak.set(Value.kForward);
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
-
-        if (onRamp == false) {
+        //set onRamp to true when on the ramp for the first time
+        if (yaw > 10 && !onRamp) {
+          onRamp = true;
+        }
+        //if not on the ramp yet, move forward
+        if (!onRamp) {
+          m_rampTimer.reset();
+          m_rampTimer.start();
           m_Left.set(0.2);
           m_Right.set(0.2);
         }
-        else if (m_timer2.get() < 1.9) {
-          m_Left.set(yaw/(70));
-          m_Right.set(yaw/(70));
+        //if onRamp is true, drive over the ramp and restart timer whenever the robot tilts
+        else if (m_rampTimer.get() < 0.8) {
+          if (Math.abs(yaw) > 6) {
+            m_rampTimer.reset();
+            m_rampTimer.start();
+          }
+          m_Left.set(0.2);
+          m_Right.set(0.2);
         }
-        else if (m_timer.get() < 8.0) {
-          m_Left.set(yaw/(49+(t*17)));
-          m_Right.set(yaw/(49+(t*17)));
+        //if the robot hasn't tiltedfor 0.8 seconds, set offRamp to true and start the rampOffTimer
+        else if(!offRamp) {
+          m_Left.set(0.2);
+          m_Right.set(0.2);
+          offRamp = true;
+          m_rampOffTimer.reset();
+          m_rampOffTimer.start();
         }
-        else {
-          m_Left.set(0);
-          m_Right.set(0);
-        }
-        if (yaw > 12 && onRamp == false) {
-          onRamp = true;
-          m_timer2.reset();
-          m_timer2.start();
+        //if the robot has left the ramp
+        else if (offRamp) {
+          //if it hasn't reentered the ramp. mo"sve backwards
+          if (m_rampOffTimer.get() > 0.5 && !backOnRamp) {
+            m_Left.set(-0.2);
+            m_Right.set(-0.2);
+            //If it gets onto the ramp, set the variable to true and start the timer
+            if (Math.abs(yaw) > 10) {
+              backOnRamp = true;
+              m_onRampAgainTimer.reset();
+              m_onRampAgainTimer.start();
+            }
+          }
+          //when it gets back onto the ramp, balance quickly for 1.5 seconds
+          else if (backOnRamp && m_onRampAgainTimer.get() < 1.5) {
+            m_Left.set(yaw/70);
+            m_Right.set(yaw/70);
+          }
+          //then switch to slow balancing
+          else if (m_onRampAgainTimer.get() < 10) {
+            m_Left.set(yaw/(49+(m_onRampAgainTimer.get()*17)));
+            m_Right.set(yaw/(49+(m_onRampAgainTimer.get()*17)));
+          }
+          //stop moving once it's been on for over 10 seconds
+          else {
+            m_Left.set(0);
+            m_Right.set(0);
+            autoStop = true;
+          }
         }
       }
-      if(t > 8 && onRamp == false) {
-        autoStop = true;
+      //if 3 seconds have gone by without the robot getting onto the ramp, sw
+      if(t > 8.0 && onRamp == false) {
         m_Left.set(0);
         m_Right.set(0);
+        autolocation = "side";
+        m_sideTimer.reset();
+        m_sideTimer.start();
       }
     }
-    //LEFT OF RAMP, RAMP SIDE
-    else if(autolocation == "left" && alliance == "Red") {
-      if (t < 0.2) {
-        m_armBase.getEncoder().setPosition(0);
-        m_Left.set(0);
-        m_Right.set(0);
-        m_Intake_Left.set(0.1);
-        m_Intake_Right.set(0.1);
-      }
-      else if (t < 1.0) {
-        m_armBase.set(-0.1);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-      }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
-        m_armBase.set(0.2);
-        m_Intake_Left.set(-0.8);
-        m_Intake_Right.set(-0.8);
-      }
-      else if (t < 2.5) {
-        m_Left.set(-0.2);
-        m_Right.set(0.2);
-      }
-      else if (t < 5) {
-        m_Left.set(0.2);
-        m_Right.set(0.2);
-      }
-      else if (t < 5.2) {
-        m_Right.set(-0.2);
-        m_Left.set(0.2);
+    //NOT IN MIDDLE
+    else if(autolocation == "side") {
+      if(m_sideTimer.get() < 0.5) {
+        pipeline.setNumber(1);
+        m_Left.set(0.15+llx/288);
+        m_Right.set(0.15-llx/288);
       }
       else {
-        m_armBase.set(-m_armBase.getEncoder().getPosition()/25);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-
-        if (onRamp == false) {
-          m_Left.set(0.2);
-          m_Right.set(0.2);
-        }
-        else if (m_timer.get() < 15) {
-          m_Left.set(yaw/(100+(t*2.5)));
-          m_Right.set(yaw/(100+(t*2.5)));
-        }
-        else {
-          m_Left.set(0);
-          m_Right.set(0);
-        }
-        if (yaw > 10) {
-          onRamp = true;
-        }
-      }
-    }
-    //RIGHT OF RAMP, SPACE SIDE
-    else if(autolocation == "right" && alliance == "Red") {
-      if (t < 0.2) {
-        m_armBase.getEncoder().setPosition(0);
         m_Left.set(0);
         m_Right.set(0);
-        m_Intake_Left.set(0.1);
-        m_Intake_Right.set(0.1);
       }
-      else if (t < 1.0) {
-        m_armBase.set(-0.1);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-      }
-      else if (t < 1.8 && m_armBase.getEncoder().getPosition() < -3.0) {
-        m_armBase.set(0.2);
-        m_Intake_Left.set(-0.8);
-        m_Intake_Right.set(-0.8);
-      }
-      else if (t < 2.5) {
-        m_Left.set(0.2);
-        m_Right.set(-0.2);
-      }
-      else if (t < 4) {
-        m_Left.set(0.2);
-        m_Right.set(0.2);
-      }
-      else if (t < 5.2) {
-        m_Right.set(0.2);
-        m_Left.set(-0.2);
-      }
-      else {
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-
-        if (onRamp == false) {
-          m_Left.set(0.2);
-          m_Right.set(0.2);
-        }
-        else if (m_timer.get() < 15) {
-          m_Left.set(yaw/(60+(t*3)));
-          m_Right.set(yaw/(60+(t*3)));
-        }
-        else {
-          m_Left.set(0);
-          m_Right.set(0);
-        }
-        if (yaw > 10) {
-          onRamp = true;
-        }
-      }
-    }
-    //LEFT OF RAMP, SPACE SIDE
-    else if(autolocation == "left" && alliance == "Blue") {
-
-    }
-    //RIGHT OF RAMP, RAMP SIDE
-    else if(autolocation == "right" && alliance  == "Blue") {
-
     }
   }
 
@@ -343,7 +299,6 @@ public class Robot extends TimedRobot {
     //This also improves handling.
 
     var divisionFunction = ((45+(Math.abs(getY)*10))/((jswitch*-1+2)*2.6));
-
     speedX = speedX + (getX - speedX)/divisionFunction;
 
     //Targeting system (targets cones and cubes)
@@ -353,8 +308,11 @@ public class Robot extends TimedRobot {
     }
 
     else {
-
-      if(m_Joystick_Drive.getRawButton(5)) {
+      
+      if(!llpos) {
+        System.out.println(lltagPos);
+      }
+      else if(m_Joystick_Drive.getRawButton(5)) {
         pipeline.setNumber(0);
         targetRotationSpeed = targetRotationSpeed+(((llx/200)-targetRotationSpeed)/20);
         if (targetRotationSpeed > 0.2) {
@@ -447,6 +405,22 @@ public class Robot extends TimedRobot {
     }
     else {
       m_Xbox_Co_Drive.setRumble(RumbleType.kBothRumble, 0);
+    }
+  
+    //limelight control
+    if (m_Joystick_Drive.getRawButton(2) && !llpos && !llbtn) {
+      pcm_llcontrol.set(Value.kForward);
+      llpos = true;
+      llbtn = true;
+    }
+    else if (m_Joystick_Drive.getRawButton(2) && llpos && !llbtn) {
+      pcm_llcontrol.set(Value.kReverse);
+      llpos = false;
+      llbtn = true;
+    }
+    else if (!m_Joystick_Drive.getRawButton(2)) {
+      pcm_llcontrol.set(Value.kOff);
+      llbtn = false;
     }
 
   }
