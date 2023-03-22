@@ -154,7 +154,6 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = m_timer.get();
     double yaw = gyro.getYaw();
-    System.out.println(m_rampTimer.get()); 
 
     //MIDDLE, BALANCE
     if (autolocation == "middle" && !autoStop) {
@@ -172,7 +171,7 @@ public class Robot extends TimedRobot {
         m_Intake_Right.set(0);
       }
       //outtake and move arm back up
-      else if (t < 2.5 && m_armBase.getEncoder().getPosition() < 15) {
+      else if (t < 4 && m_armBase.getEncoder().getPosition() < 21) {
         m_armBase.set(0.2);
         m_Intake_Left.set(-0.8);
         m_Intake_Right.set(-0.8);
@@ -186,7 +185,7 @@ public class Robot extends TimedRobot {
         m_Intake_Left.set(0);
         m_Intake_Right.set(0);
         //set onRamp to true when on the ramp for the first time
-        if (yaw > 10 && !onRamp) {
+        if (yaw > 8 && !onRamp) {
           onRamp = true;
         }
         //if not on the ramp yet, move forward
@@ -233,8 +232,8 @@ public class Robot extends TimedRobot {
           }
           //then switch to slow balancing
           else if (m_onRampAgainTimer.get() < 10) {
-            m_Left.set(yaw/(49+(m_onRampAgainTimer.get()*17)));
-            m_Right.set(yaw/(49+(m_onRampAgainTimer.get()*17)));
+            m_Left.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
+            m_Right.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
           }
           //stop moving once it's been on for over 10 seconds
           else {
@@ -245,7 +244,7 @@ public class Robot extends TimedRobot {
         }
       }
       //if 3 seconds have gone by without the robot getting onto the ramp, sw
-      if(t > 8.0 && onRamp == false) {
+      if(t > 4.5 && !onRamp) {
         m_Left.set(0);
         m_Right.set(0);
         autolocation = "side";
@@ -255,10 +254,10 @@ public class Robot extends TimedRobot {
     }
     //NOT IN MIDDLE
     else if(autolocation == "side") {
-      if(m_sideTimer.get() < 0.5) {
+      if(m_sideTimer.get() < 3.38) {
         pipeline.setNumber(1);
-        m_Left.set(0.15+llx/288);
-        m_Right.set(0.15-llx/288);
+        m_Left.set(0.15+llx/158);
+        m_Right.set(0.15-llx/158);
       }
       else {
         m_Left.set(0);
@@ -270,9 +269,9 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
+    m_armBase.getEncoder().setPosition(0);
     armTarget = 0;
     armSpeed = 0;
-    m_armBase.getEncoder().setPosition(0);
     intakeMoving = false;
     targetPosL = m_Intake_Left.getEncoder().getPosition();
     targetPosR = m_Intake_Right.getEncoder().getPosition();
@@ -293,7 +292,7 @@ public class Robot extends TimedRobot {
     
     //This speed line makes the robot accelerate to the Joystick's position
     //Which improves handling of the vehicle greatly.
-    speedY = speedY + (getY - speedY)/(45/((jswitch*-1+2)*2.6));
+    speedY = speedY + (getY - speedY)/(45/((jswitch*-1+2)*2.8));
 
     //The farther forward the joystick is, the less sensitive the rotation will be.
     //This also improves handling.
@@ -337,7 +336,7 @@ public class Robot extends TimedRobot {
 
     armPos = m_armBase.getEncoder().getPosition();
 
-    double lowerLimit = 20;
+    double lowerLimit = 22;
     if (m_Xbox_Co_Drive.getRightTriggerAxis() > 0.05) {
       armTarget  += m_Xbox_Co_Drive.getRightTriggerAxis()/7;
       if (armTarget > lowerLimit && m_Xbox_Co_Drive.getRightBumper() == false) {
