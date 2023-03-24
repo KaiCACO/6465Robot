@@ -258,8 +258,21 @@ public class Robot extends TimedRobot {
         pipeline.setNumber(1);
         m_Left.set(0.15+llx/158);
         m_Right.set(0.15-llx/158);
+        m_Intake_Left.set(0.1);
+        m_Intake_Right.set(0.1);
+      }
+      else if (m_sideTimer.get() > 3.9) {
+        m_Intake_Left.set(0.3);
+        m_Intake_Right.set(0.3);
+      }
+      else if(m_armBase.getEncoder().getPosition() > 3) {
+        pcm_armBreak.set(Value.kReverse);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+        m_armBase.set(-0.2);
       }
       else {
+        pcm_armBreak.set(Value.kForward);
         m_Left.set(0);
         m_Right.set(0);
       }
