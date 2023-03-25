@@ -45,7 +45,9 @@ public class Robot extends TimedRobot {
   double targetRotationSpeed = 0.0;
   boolean autoStop = false;
   String autolocation = "middle";
+  Boolean turnStarted = false;
 
+  Boolean turnAtStart = false;
 
   String alliance = DriverStation.getAlliance().name();
 
@@ -92,12 +94,14 @@ public class Robot extends TimedRobot {
   Boolean llbtn = false;
   Boolean offRamp = false;
   Boolean backOnRamp = false;
+  Boolean levelArm = false;
 
   private final Timer m_timer = new Timer();
   private final Timer m_rampTimer = new Timer();
   private final Timer m_rampOffTimer = new Timer();
   private final Timer m_onRampAgainTimer = new Timer();
   private final Timer m_sideTimer = new Timer();
+  private final Timer m_turnTimer = new Timer();
 
 
   /**
@@ -146,7 +150,7 @@ public class Robot extends TimedRobot {
     pcm_llcontrol.set(Value.kForward);
     m_armBase.getEncoder().setPosition(0);
     offRamp = false;
-
+    backOnRamp = false;
   }
 
   /** This function is called periodically during autonomous. */
@@ -157,92 +161,134 @@ public class Robot extends TimedRobot {
 
     //MIDDLE, BALANCE
     if (autolocation == "middle" && !autoStop) {
+      
+      if (!offRamp) {
       //intake cube a little
-      if (t < 0.28) {
-        m_Left.set(0);
-        m_Right.set(0);
-        m_Intake_Left.set(0.28);
-        m_Intake_Right.set(0.28);
-      }
-      //bring arm back
-      else if (t < 1.0) {
-        m_armBase.set(-0.1);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-      }
-      //outtake and move arm back up
-      else if (t < 4 && m_armBase.getEncoder().getPosition() < 21) {
-        m_armBase.set(0.2);
-        m_Intake_Left.set(-0.8);
-        m_Intake_Right.set(-0.8);
-        m_Left.set(0);
-        m_Right.set(0);
-      }
-      else if (!autoStop) {
-        //break arm
-        m_armBase.set(0);
-        pcm_armBreak.set(Value.kForward);
-        m_Intake_Left.set(0);
-        m_Intake_Right.set(0);
-        //set onRamp to true when on the ramp for the first time
-        if (yaw > 8 && !onRamp) {
-          onRamp = true;
+        if (t < 0.28) {
+          m_Left.set(0);
+          m_Right.set(0);
+          m_Intake_Left.set(0.28);
+          m_Intake_Right.set(0.28);
         }
-        //if not on the ramp yet, move forward
-        if (!onRamp) {
-          m_rampTimer.reset();
-          m_rampTimer.start();
-          m_Left.set(0.2);
-          m_Right.set(0.2);
+        //bring arm back
+        else if (t < 1.0) {
+          m_armBase.set(-0.1);
+          m_Intake_Left.set(0);
+          m_Intake_Right.set(0);
         }
-        //if onRamp is true, drive over the ramp and restart timer whenever the robot tilts
-        else if (m_rampTimer.get() < 0.8) {
-          if (Math.abs(yaw) > 6) {
-            m_rampTimer.reset();
-            m_rampTimer.start();
+        //outtake and move arm back up
+        else if (t < 4 && m_armBase.getEncoder().getPosition() < -3 ) {
+          m_armBase.set(0.2);
+          m_Intake_Left.set(-0.9);
+          m_Intake_Right.set(-0.9);
+          m_Left.set(0);
+          m_Right.set(0);
+        }
+        else if (turnAtStart) {
+          pcm_armBreak.set(Value.kForward);
+          if(!turnStarted) {
+            m_turnTimer.reset();
+            m_turnTimer.start();
+            m_timer.stop();
           }
-          m_Left.set(0.2);
-          m_Right.set(0.2);
-        }
-        //if the robot hasn't tiltedfor 0.8 seconds, set offRamp to true and start the rampOffTimer
-        else if(!offRamp) {
-          m_Left.set(0.2);
-          m_Right.set(0.2);
-          offRamp = true;
-          m_rampOffTimer.reset();
-          m_rampOffTimer.start();
-        }
-        //if the robot has left the ramp
-        else if (offRamp) {
-          //if it hasn't reentered the ramp. mo"sve backwards
-          if (m_rampOffTimer.get() > 0.5 && !backOnRamp) {
-            m_Left.set(-0.2);
-            m_Right.set(-0.2);
-            //If it gets onto the ramp, set the variable to true and start the timer
-            if (Math.abs(yaw) > 10) {
-              backOnRamp = true;
-              m_onRampAgainTimer.reset();
-              m_onRampAgainTimer.start();
+          turnStarted = true;
+          if(m_turnTimer.get() < 0.3) {
+            if (alliance == "Red") {
+              m_Left.set(-0.2);
+              m_Right.set(0.2);
+            }
+            else {
+              m_Left.set(0.2);
+              m_Right.set(-0.2);
             }
           }
-          //when it gets back onto the ramp, balance quickly for 1.5 seconds
-          else if (backOnRamp && m_onRampAgainTimer.get() < 1.5) {
-            m_Left.set(yaw/70);
-            m_Right.set(yaw/70);
+          else if (m_turnTimer.get() < 0.6) {
+            m_Left.set(0.2);
+            m_Right.set(0.2);
           }
-          //then switch to slow balancing
-          else if (m_onRampAgainTimer.get() < 10) {
-            m_Left.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
-            m_Right.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
+          else if (m_turnTimer.get() < 1.18) {
+            if (alliance == "Red") {
+              m_Left.set(0.2);
+              m_Right.set(-0.2);
+            }
+            else {
+              m_Left.set(-0.2);
+              m_Right.set(0.2);
+            }
           }
-          //stop moving once it's been on for over 10 seconds
           else {
+            turnAtStart = false;
+          }
+        }
+        else if (!autoStop) {
+          //break arm
+          m_armBase.set(0);
+          pcm_armBreak.set(Value.kForward);
+          m_Intake_Left.set(0);
+          m_Intake_Right.set(0);
+          //set onRamp to true when on the ramp for the first time
+          if (yaw > 10 && !onRamp) {
+            onRamp = true;
+          }
+          //if not on the ramp yet, move forward
+          if (!onRamp) {
+            m_rampTimer.reset();
+            m_rampTimer.start();
+            m_Left.set(0.2);
+            m_Right.set(0.2);
+          }
+          //if onRamp is true, drive over the ramp and restart timer whenever the robot tilts
+          else if (m_rampTimer.get() < 0.8) {
+            if (Math.abs(yaw) > 8) {
+              m_rampTimer.reset();
+              m_rampTimer.start();
+            }
+            m_Left.set(0.2);
+            m_Right.set(0.2);
+          }
+          //if the robot hasn't tilted for 0.8 seconds, set offRamp to true and start the rampOffTimer
+          else if(!offRamp) {
             m_Left.set(0);
             m_Right.set(0);
-            autoStop = true;
+            offRamp = true;
+            m_rampOffTimer.reset();
+            m_rampOffTimer.start();
           }
         }
       }
+      //if the robot has left the ramp
+      else if (offRamp) {
+        pcm_armBreak.set(Value.kForward);
+        //if it hasn't reentered the ramp. move backwards
+        if (m_rampOffTimer.get() > 0.5 && !backOnRamp) {
+          m_Left.set(-0.25);
+          m_Right.set(-0.25);
+          //If it gets onto the ramp, set the variable to true and start the timer
+          if (Math.abs(yaw) > 10) {
+            backOnRamp = true;
+            m_onRampAgainTimer.reset();
+            m_onRampAgainTimer.start();
+          }
+        }
+        //when it gets back onto the ramp, balance quickly for 1.5 seconds
+        else if (backOnRamp && m_onRampAgainTimer.get() < 1.5) {
+          m_Left.set(yaw/75);
+          m_Right.set(yaw/75);
+        }
+        //then switch to slow balancing
+        else if (m_onRampAgainTimer.get() < 10) {
+          m_Left.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
+          m_Right.set(yaw/(62+(m_onRampAgainTimer.get()*22)));
+        }
+        //stop moving once it's been on for over 10 seconds
+        else {
+          m_Left.set(0);
+          m_Right.set(0);
+          autoStop = true;
+          levelArm = true;
+        }
+      }
+      
       //if 3 seconds have gone by without the robot getting onto the ramp, sw
       if(t > 4.5 && !onRamp) {
         m_Left.set(0);
@@ -251,17 +297,36 @@ public class Robot extends TimedRobot {
         m_sideTimer.reset();
         m_sideTimer.start();
       }
+      if(levelArm) {
+        pcm_armBreak.set(Value.kReverse);
+        m_armBase.set((-armPos)/18);
+        if(Math.abs(armPos) < 3) {
+          pcm_armBreak.set(Value.kForward);
+          m_armBase.set(0);
+          levelArm = false;
+        }
+      }
     }
     //NOT IN MIDDLE
     else if(autolocation == "side") {
       if(m_sideTimer.get() < 3.38) {
+        if (m_armBase.getEncoder().getPosition() < 21) {
+          pcm_armBreak.set(Value.kReverse);
+          m_armBase.set(0.2);
+        }
+        else {
+          m_armBase.set(0);
+          pcm_armBreak.set(Value.kForward);
+        }
         pipeline.setNumber(1);
         m_Left.set(0.15+llx/158);
         m_Right.set(0.15-llx/158);
         m_Intake_Left.set(0.1);
         m_Intake_Right.set(0.1);
       }
-      else if (m_sideTimer.get() > 3.9) {
+      else if (m_sideTimer.get() < 3.9) {
+        m_armBase.set(0);
+        pcm_armBreak.set(Value.kForward);
         m_Intake_Left.set(0.3);
         m_Intake_Right.set(0.3);
       }
@@ -271,8 +336,13 @@ public class Robot extends TimedRobot {
         m_Intake_Right.set(0);
         m_armBase.set(-0.2);
       }
-      else {
+      else if (m_sideTimer.get() > 4.8) {
         pcm_armBreak.set(Value.kForward);
+        m_Left.set(-0.2);
+        m_Right.set(-0.2);
+      }
+      else {
+        pcm_armBreak.set(Value.kOff);
         m_Left.set(0);
         m_Right.set(0);
       }
@@ -290,6 +360,8 @@ public class Robot extends TimedRobot {
     targetPosR = m_Intake_Right.getEncoder().getPosition();
     pcm_armBreak.set(Value.kReverse);
     autoStop = false;
+    m_Left.set(0);
+    m_Right.set(0);
   }
 
   /** This function is called periodically during operator control. */
@@ -452,11 +524,13 @@ public class Robot extends TimedRobot {
   public void testInit() {
     m_Left.set(0);
     m_Right.set(0);
+    gyro.zeroYaw();
   }
 
   /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {
+    System.out.println(gyro.getYaw());
     if (m_Xbox_Co_Drive.getRightBumper()) {
       pcm_armBreak.set(Value.kForward);
     }
