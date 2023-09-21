@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.networktables.NetworkTable;
@@ -44,10 +45,7 @@ public class Robot extends TimedRobot {
   boolean onRamp = false;
   double targetRotationSpeed = 0.0;
   boolean autoStop = false;
-  String autolocation = "middle";
-  Boolean turnStarted = false;
-
-  Boolean turnAtStart = false;
+  private String autolocation;
 
   String alliance = DriverStation.getAlliance().name();
 
@@ -76,7 +74,6 @@ public class Robot extends TimedRobot {
   private final AHRS gyro = new AHRS(I2C.Port.kOnboard);
   private final DoubleSolenoid pcm_armBreak = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 1, 0);
   private final DoubleSolenoid pcm_llcontrol = new DoubleSolenoid(PneumaticsModuleType.CTREPCM, 3, 2);
-  private final DigitalInput bendySwitch = new DigitalInput(0);
 
   NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
   NetworkTableEntry tx = table.getEntry("tx");
@@ -101,7 +98,6 @@ public class Robot extends TimedRobot {
   private final Timer m_rampOffTimer = new Timer();
   private final Timer m_onRampAgainTimer = new Timer();
   private final Timer m_sideTimer = new Timer();
-  private final Timer m_turnTimer = new Timer();
 
 
   /**
@@ -119,6 +115,9 @@ public class Robot extends TimedRobot {
     pcm_Compressor.enableDigital();
     pcm_armBreak.set(Value.kReverse);
     pcm_llcontrol.set(Value.kForward);
+
+    var autoOptions = new String[] {"balance", "justPlaceCube", "goGetConeNoRamp", "noMovement"};
+    SmartDashboard.putStringArray("Auto List", autoOptions);
 
   }
 
@@ -151,6 +150,8 @@ public class Robot extends TimedRobot {
     m_armBase.getEncoder().setPosition(0);
     offRamp = false;
     backOnRamp = false;
+
+    autolocation = SmartDashboard.getString("Auto Selector", "justPlaceCube");
   }
 
   /** This function is called periodically during autonomous. */
@@ -160,7 +161,7 @@ public class Robot extends TimedRobot {
     double yaw = gyro.getYaw();
 
     //MIDDLE, BALANCE
-    if (autolocation == "middle" && !autoStop) {
+    if (autolocation.equals("balance") && !autoStop) {
       
       if (!offRamp) {
       //intake cube a little
@@ -177,48 +178,12 @@ public class Robot extends TimedRobot {
           m_Intake_Right.set(0);
         }
         //outtake and move arm back up
-        else if (t < 4 && m_armBase.getEncoder().getPosition() < -3 ) {
+        else if (t < 4 && m_armBase.getEncoder().getPosition() < -1 ) {
           m_armBase.set(0.2);
           m_Intake_Left.set(-0.9);
           m_Intake_Right.set(-0.9);
           m_Left.set(0);
           m_Right.set(0);
-        }
-        else if (turnAtStart) {
-          pcm_armBreak.set(Value.kForward);
-          if(!turnStarted) {
-            m_turnTimer.reset();
-            m_turnTimer.start();
-            m_timer.stop();
-          }
-          turnStarted = true;
-          if(m_turnTimer.get() < 0.3) {
-            if (alliance == "Red") {
-              m_Left.set(-0.2);
-              m_Right.set(0.2);
-            }
-            else {
-              m_Left.set(0.2);
-              m_Right.set(-0.2);
-            }
-          }
-          else if (m_turnTimer.get() < 0.6) {
-            m_Left.set(0.2);
-            m_Right.set(0.2);
-          }
-          else if (m_turnTimer.get() < 1.18) {
-            if (alliance == "Red") {
-              m_Left.set(0.2);
-              m_Right.set(-0.2);
-            }
-            else {
-              m_Left.set(-0.2);
-              m_Right.set(0.2);
-            }
-          }
-          else {
-            turnAtStart = false;
-          }
         }
         else if (!autoStop) {
           //break arm
@@ -290,10 +255,10 @@ public class Robot extends TimedRobot {
       }
       
       //if 3 seconds have gone by without the robot getting onto the ramp, sw
-      if(t > 4.5 && !onRamp) {
+      if(t > 9 && !onRamp) {
         m_Left.set(0);
         m_Right.set(0);
-        autolocation = "side";
+        autolocation = "noMovement";
         m_sideTimer.reset();
         m_sideTimer.start();
       }
@@ -308,9 +273,9 @@ public class Robot extends TimedRobot {
       }
     }
     //NOT IN MIDDLE
-    else if(autolocation == "side") {
+    else if(autolocation.equals("goGetConeNoRamp")) {
       if(m_sideTimer.get() < 3.38) {
-        if (m_armBase.getEncoder().getPosition() < 21) {
+        if (m_armBase.getEncoder().getPosition() < 20) {
           pcm_armBreak.set(Value.kReverse);
           m_armBase.set(0.2);
         }
@@ -318,7 +283,7 @@ public class Robot extends TimedRobot {
           m_armBase.set(0);
           pcm_armBreak.set(Value.kForward);
         }
-        pipeline.setNumber(1);
+        pipeline.setNumber(0);
         m_Left.set(0.15+llx/158);
         m_Right.set(0.15-llx/158);
         m_Intake_Left.set(0.1);
@@ -336,17 +301,43 @@ public class Robot extends TimedRobot {
         m_Intake_Right.set(0);
         m_armBase.set(-0.2);
       }
-      else if (m_sideTimer.get() > 4.8) {
-        pcm_armBreak.set(Value.kForward);
-        m_Left.set(-0.2);
-        m_Right.set(-0.2);
-      }
       else {
+        m_armBase.set(0);
         pcm_armBreak.set(Value.kOff);
         m_Left.set(0);
         m_Right.set(0);
       }
     }
+    else if(autolocation.equals("justPlaceCube")) {
+      //intake cube a little
+      if (t < 0.28) {
+        pcm_armBreak.set(Value.kReverse);
+        m_Left.set(0);
+        m_Right.set(0);
+        m_Intake_Left.set(0.28);
+        m_Intake_Right.set(0.28);
+      }
+      //bring arm back
+      else if (t < 1.0) {
+        m_armBase.set(-0.1);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+      //outtake and move arm back up
+      else if (t < 4 && m_armBase.getEncoder().getPosition() < -1 ) {
+        m_armBase.set(0.2);
+        m_Intake_Left.set(-0.9);
+        m_Intake_Right.set(-0.9);
+        m_Left.set(0);
+        m_Right.set(0);
+      }
+      else {
+        pcm_armBreak.set(Value.kForward);
+        m_armBase.set(0);
+        m_Intake_Left.set(0);
+        m_Intake_Right.set(0);
+      }
+    };
   }
 
   /** This function is called once when teleop is enabled. */
