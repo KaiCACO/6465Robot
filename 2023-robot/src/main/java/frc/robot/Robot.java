@@ -451,13 +451,13 @@ public class Robot extends TimedRobot {
   
     //intake
     if (m_Xbox_Co_Drive.getAButton()) {
-      m_Intake_Right.set(0.2);
-      m_Intake_Left.set(0.2);
+      m_Intake_Right.set(0.5);
+      m_Intake_Left.set(0.5);
       intakeMoving = true;
     }
     else if (m_Xbox_Co_Drive.getBButton()) {
-      m_Intake_Right.set(-0.45);
-      m_Intake_Left.set(-0.45);
+      m_Intake_Right.set(-0.5);
+      m_Intake_Left.set(-0.5);
       intakeMoving = true;
     }
     else {
