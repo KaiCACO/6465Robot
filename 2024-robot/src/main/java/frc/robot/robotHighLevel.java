@@ -37,14 +37,20 @@ public class robotHighLevel {
     var ang = joystickVector[1];
 
     // now amp and ang contain robot movement speed and angle
-    transX = Math.sqrt((amp*amp) + (Math.sin(ang)*Math.sin(ang)));
-    transY = Math.sqrt((amp*amp) + (Math.cos(ang)*Math.cos(ang)));
+    transX = Math.sqrt(amp*(Math.sin(ang)*Math.sin(ang)));
+    transY = Math.sqrt(amp*(Math.cos(ang)*Math.cos(ang)));
     rot = m_Xbox.getRightX();
   }
 
   private static double[] vectorize(double x, double y) {
     var amp = Math.sqrt((x*x)+(y*y));
-    var theta = Math.atan(y/x);
+    var theta = 0.0;
+    if (Double.isFinite(y/x)) {
+      theta = Math.atan(y/x);
+    }
+    if (amp < 0.01) {
+      amp = 0.0;
+    }
     double[] ret = new double[2];
     ret[0] = amp;
     ret[1] = theta;
