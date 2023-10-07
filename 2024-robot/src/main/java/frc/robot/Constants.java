@@ -50,21 +50,21 @@ public final class Constants {
     // public static final double kFrontRightChassisAngularOffset = 0;
     // public static final double kBackLeftChassisAngularOffset = Math.PI;
     // public static final double kBackRightChassisAngularOffset = Math.PI / 2;
-    public static final double kFrontLeftChassisAngularOffset = 0;
-    public static final double kFrontRightChassisAngularOffset = 0;
-    public static final double kBackLeftChassisAngularOffset = 0;
-    public static final double kBackRightChassisAngularOffset = 0;
+    public static final double kFrontLeftChassisAngularOffset = Math.PI/2;
+    public static final double kFrontRightChassisAngularOffset = Math.PI/2;
+    public static final double kBackLeftChassisAngularOffset = Math.PI/2;
+    public static final double kBackRightChassisAngularOffset = Math.PI/2;
 
     // SPARK MAX CAN IDs
-    public static final int kFrontLeftDrivingCanId = 2;
-    public static final int kRearLeftDrivingCanId = 4;
-    public static final int kFrontRightDrivingCanId = 8;
-    public static final int kRearRightDrivingCanId = 6;
+    public static final int kFrontLeftDrivingCanId = 8;
+    public static final int kRearLeftDrivingCanId = 2;
+    public static final int kFrontRightDrivingCanId = 6;
+    public static final int kRearRightDrivingCanId = 4;
 
-    public static final int kFrontLeftTurningCanId = 1;
-    public static final int kRearLeftTurningCanId = 3;
-    public static final int kFrontRightTurningCanId = 7;
-    public static final int kRearRightTurningCanId = 5;
+    public static final int kFrontLeftTurningCanId = 7;
+    public static final int kRearLeftTurningCanId = 1;
+    public static final int kFrontRightTurningCanId = 5;
+    public static final int kRearRightTurningCanId = 3;
 
     public static final boolean kGyroReversed = false;
   }
@@ -121,8 +121,7 @@ public final class Constants {
   }
 
   public static final class OIConstants {
-    public static final int joystickPort = 0;
-    public static final int xboxPort = 1;
+    public static final int kDriverControllerPort = 1;
     public static final double kDriveDeadband = 0.05;
   }
 
