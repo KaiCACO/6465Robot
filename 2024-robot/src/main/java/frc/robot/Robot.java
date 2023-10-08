@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DigitalInput;
-
+import com.ctre.phoenix.sensors.WPI_Pigeon2;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -32,6 +32,8 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+
+  private static WPI_Pigeon2 gyro = new WPI_Pigeon2(12);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -64,6 +66,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    gyro.setYaw(0.0);
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -79,14 +82,18 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+    gyro.setYaw(0.0);
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    RobotContainer.rot = xbox.getRightX();
+    // var xboxVector = positionToVector(xbox.getLeftX(), xbox.getLeftY());
+    // RobotContainer.rot = xboxVector[1] * calculateRotationSpeed(gyro.getYaw(), xboxVector[0]);
+    RobotContainer.rot = xbox.getLeftX();
+    RobotContainer.rotOffset = -gyro.getYaw();
 
-    var newValues = offsetJoystick(xbox.getLeftX(), xbox.getLeftY(), RobotContainer.rotOffset);
+    var newValues = offsetJoystick(joystick.getX(), -joystick.getY(), RobotContainer.rotOffset-90);
     RobotContainer.transX = newValues[0];
     RobotContainer.transY = newValues[1];
     
@@ -119,21 +126,44 @@ public class Robot extends TimedRobot {
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
+    gyro.setYaw(0.0);
   }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    var xboxDir = positionToVector(xbox.getRightX(), -xbox.getRightY());
+    System.out.println("direction: " + xboxDir[0]);
+    System.out.println("amp: " + xboxDir[1]);
+  }
 
   private static double[] offsetJoystick(double x, double y, double degrees) {
     double radians = Math.toRadians(degrees);
+
     double newX = x * Math.cos(radians) - y * Math.sin(radians);
     double newY = x * Math.sin(radians) + y * Math.cos(radians);
-
-    newX = Math.round(newX * 1000000.0) / 1000000.0;
-    newY = Math.round(newY * 1000000.0) / 1000000.0;
 
     double[] newValues = {newX, newY};
     return newValues;
   }
+
+  private static double[] positionToVector(double x, double y) {
+    var angle = Math.toDegrees(Math.atan2(y, x));
+    var dis = Math.sqrt((x*x) + (y*y))/1.125;
+    return new double[]{angle, dis};
+  }
+
+  private static double calculateRotationSpeed(double currentRotation, double desiredRotation) {
+    var rotationDifference = desiredRotation - currentRotation;
+
+    if(rotationDifference > 180) {
+      rotationDifference -= 360;
+    }
+    else if(rotationDifference < -180) {
+      rotationDifference += 360;
+    }
+
+    return rotationDifference/180;
+  }
+
 }
