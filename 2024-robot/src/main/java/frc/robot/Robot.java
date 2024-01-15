@@ -152,9 +152,7 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void testPeriodic() {
-    System.out.println("yaw: " + gyro.getYaw());
-  }
+  public void testPeriodic() {}
 
   private static double[] offsetJoystick(double x, double y, double degrees) {
     double radians = Math.toRadians(degrees);
