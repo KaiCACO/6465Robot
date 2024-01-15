@@ -12,9 +12,10 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.drive.RobotContainer;
 import edu.wpi.first.wpilibj.XboxController;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import edu.wpi.first.wpilibj.DigitalInput;
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -31,10 +32,13 @@ public class Robot extends TimedRobot {
   private DigitalInput limitSwitch = new DigitalInput(1);
   private Command m_autonomousCommand;
   private RobotContainer m_robotContainer;
-  private static WPI_Pigeon2 gyro = new WPI_Pigeon2(12);
+  private static Pigeon2 gyro = new Pigeon2(12);
 
   private Timer autoTimer = new Timer();
   private boolean onRamp = false;
+
+  private double g_roll = 0.0;
+  private double g_yaw = 0.0;
 
   @Override
   public void robotInit() {
@@ -44,6 +48,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    g_roll = gyro.getRoll().getValueAsDouble();
+    g_yaw = gyro.getYaw().getValueAsDouble();
   }
 
   @Override
@@ -55,7 +61,6 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousInit() {
     gyro.reset();
-    gyro.configFactoryDefault();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -69,7 +74,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    var angle = -gyro.getRoll();
+    var angle = -g_roll;
     if (onRamp == false && angle > 5) {
       onRamp = true;
       autoTimer.stop();
@@ -92,7 +97,6 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     gyro.reset();
-    gyro.configFactoryDefault();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -106,7 +110,7 @@ public class Robot extends TimedRobot {
     if (joystick.getZ() < 0) {
       RobotContainer.rot = -RobotContainer.rot;
     }
-    RobotContainer.rotOffset = -gyro.getYaw();
+    RobotContainer.rotOffset = -g_yaw;
 
     var x = joystick.getX();
     var y = joystick.getY();

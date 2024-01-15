@@ -9,7 +9,7 @@ import edu.wpi.first.math.Vector;
 
 /** Add your docs here. */
 public class get3DPosition {
-    private double[] aprilTagLocation() {
-        return [1.0, 2.0];
+    private static void aprilTagLocation() {
+        
     }
 }
