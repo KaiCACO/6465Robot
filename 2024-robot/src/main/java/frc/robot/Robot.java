@@ -4,169 +4,54 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.drive.RobotContainer;
 import edu.wpi.first.wpilibj.XboxController;
-import com.revrobotics.CANSparkMax;
-import edu.wpi.first.wpilibj.DigitalInput;
-import com.ctre.phoenix6.hardware.Pigeon2;
-import com.revrobotics.CANSparkLowLevel.MotorType;
 
-/**
- * The VM is configured to automatically run this class, and to call the functions corresponding to
- * each mode, as described in the TimedRobot documentation. If you change the name of this class or
- * the package after creating this project, you must also update the build.gradle file in the
- * project.
- */
 public class Robot extends TimedRobot {
-  private CANSparkMax arm = new CANSparkMax(9, MotorType.kBrushless);
-  private CANSparkMax intakeL = new CANSparkMax(10, MotorType.kBrushless);
-  private CANSparkMax intakeR = new CANSparkMax(11, MotorType.kBrushless);
+  private final XboxController m_controller = new XboxController(1);
+  private final Drivetrain m_swerve = new Drivetrain();
 
-  private XboxController xbox = new XboxController(1);
-  private Joystick joystick = new Joystick(0);
-  private DigitalInput limitSwitch = new DigitalInput(1);
-  private Command m_autonomousCommand;
-  private RobotContainer m_robotContainer;
-  private static Pigeon2 gyro = new Pigeon2(12);
-
-  private Timer autoTimer = new Timer();
-  private boolean onRamp = false;
-
-  private double g_roll = 0.0;
-  private double g_yaw = 0.0;
-
-  @Override
-  public void robotInit() {
-    m_robotContainer = new RobotContainer();
-  }
-  
-  @Override
-  public void robotPeriodic() {
-    CommandScheduler.getInstance().run();
-    g_roll = gyro.getRoll().getValueAsDouble();
-    g_yaw = gyro.getYaw().getValueAsDouble();
-  }
-
-  @Override
-  public void disabledInit() {}
-
-  @Override
-  public void disabledPeriodic() {}
-
-  @Override
-  public void autonomousInit() {
-    gyro.reset();
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
-    autoTimer.stop();
-    autoTimer.reset();
-    autoTimer.start();
-    RobotContainer.rot = 0.0;
-    RobotContainer.transX = 0.0;
-    RobotContainer.transY = 0.0;
-  }
+  // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
+  private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
   @Override
   public void autonomousPeriodic() {
-    var angle = -g_roll;
-    if (onRamp == false && angle > 5) {
-      onRamp = true;
-      autoTimer.stop();
-      autoTimer.reset();
-      autoTimer.start();
-    }
-    if(true) {
-      if (autoTimer.get() < 3.3 && onRamp == false) {
-        RobotContainer.transX = 0.2;
-      }
-      else if (onRamp == true) {
-        RobotContainer.transX = angle/(20+((autoTimer.get()*1.5)));
-      }
-      else {
-        RobotContainer.transX = 0.0;
-      }
-    }
-  }
-
-  @Override
-  public void teleopInit() {
-    gyro.reset();
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
+    driveWithJoystick(false);
+    m_swerve.updateOdometry();
   }
 
   @Override
   public void teleopPeriodic() {
-    // var xboxVector = positionToVector(xbox.getLeftX(), xbox.getLeftY());
-    // RobotContainer.rot = xboxVector[1] * calculateRotationSpeed(gyro.getYaw(), xboxVector[0]);
-    RobotContainer.rot = joystick.getZ()*joystick.getZ()/1.5;
-    if (joystick.getZ() < 0) {
-      RobotContainer.rot = -RobotContainer.rot;
-    }
-    RobotContainer.rotOffset = -g_yaw;
-
-    var x = joystick.getX();
-    var y = joystick.getY();
-
-    if (Math.abs(x) < 0.03) {
-      x = 0;
-    }
-    if (Math.abs(y) < 0.03) {
-      y = 0;
-    }
-
-    var newValues = offsetJoystick(x, -y, RobotContainer.rotOffset-90);
-    RobotContainer.transX = newValues[0];
-    RobotContainer.transY = newValues[1];
-    
-
-    if (xbox.getLeftBumper() && limitSwitch.get()) {
-      arm.set(.4);
-    }
-    else if (xbox.getRightBumper()) {
-      arm.set(-.4);
-    }
-    else {
-      arm.set(0);
-    }
-
-    if (xbox.getAButton()) {
-      intakeL.set(0.5);
-      intakeR.set(-0.5);
-    }
-    else if (xbox.getBButton()) {
-      intakeL.set(-1);
-      intakeR.set(1);
-    }
-    else {
-      intakeL.set(0);
-      intakeR.set(0);
-    }
+    driveWithJoystick(true);
+    m_swerve.printStats();
   }
 
-  @Override
-  public void testInit() {
-    CommandScheduler.getInstance().cancelAll();
+  private void driveWithJoystick(boolean fieldRelative) {
+    // Get the x speed. We are inverting this because Xbox controllers return
+    // negative values when we push forward.
+    final var xSpeed =
+        -m_xspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftY(), 0.02))
+            * Drivetrain.kMaxSpeed;
+
+    // Get the y speed or sideways/strafe speed. We are inverting this because
+    // we want a positive value when we pull to the left. Xbox controllers
+    // return positive values when you pull to the right by default.
+    final var ySpeed =
+        -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.02))
+            * Drivetrain.kMaxSpeed;
+
+    // Get the rate of angular rotation. We are inverting this because we want a
+    // positive value when we pull to the left (remember, CCW is positive in
+    // mathematics). Xbox controllers return positive values when you pull to
+    // the right by default.
+    final var rot =
+        -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.02))
+            * Drivetrain.kMaxAngularSpeed;
+
+    m_swerve.drive(xSpeed, ySpeed, rot, fieldRelative, getPeriod());
   }
-
-  @Override
-  public void testPeriodic() {}
-
-  private static double[] offsetJoystick(double x, double y, double degrees) {
-    double radians = Math.toRadians(degrees);
-
-    double newX = x * Math.cos(radians) - y * Math.sin(radians);
-    double newY = x * Math.sin(radians) + y * Math.cos(radians);
-
-    double[] newValues = {newX, newY};
-    return newValues;
-  }
-
 }

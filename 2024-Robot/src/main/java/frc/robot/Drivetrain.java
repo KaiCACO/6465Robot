@@ -4,16 +4,13 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogGyro;
-import edu.wpi.first.wpilibj.Timer;
+import com.ctre.phoenix6.hardware.Pigeon2;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
@@ -30,16 +27,14 @@ public class Drivetrain {
   private final SwerveModule m_backLeft = new SwerveModule(5, 6, 8, 9, 10, 11);
   private final SwerveModule m_backRight = new SwerveModule(7, 8, 12, 13, 14, 15);
 
-  private final AnalogGyro m_gyro = new AnalogGyro(0);
+  private final Pigeon2 m_gyro = new Pigeon2(12);
 
   private final SwerveDriveKinematics m_kinematics =
       new SwerveDriveKinematics(
           m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation);
 
-  /* Here we use SwerveDrivePoseEstimator so that we can fuse odometry readings. The numbers used
-  below are robot specific, and should be tuned. */
-  private final SwerveDrivePoseEstimator m_poseEstimator =
-      new SwerveDrivePoseEstimator(
+  private final SwerveDriveOdometry m_odometry =
+      new SwerveDriveOdometry(
           m_kinematics,
           m_gyro.getRotation2d(),
           new SwerveModulePosition[] {
@@ -47,13 +42,14 @@ public class Drivetrain {
             m_frontRight.getPosition(),
             m_backLeft.getPosition(),
             m_backRight.getPosition()
-          },
-          new Pose2d(),
-          VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5)),
-          VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(30)));
+          });
 
   public Drivetrain() {
     m_gyro.reset();
+  }
+
+  public void printStats() {
+    // System.out.println(m_backLeft.getPosition().angle);
   }
 
   /**
@@ -71,7 +67,7 @@ public class Drivetrain {
             ChassisSpeeds.discretize(
                 fieldRelative
                     ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                        xSpeed, ySpeed, rot, m_poseEstimator.getEstimatedPosition().getRotation())
+                        xSpeed, ySpeed, rot, m_gyro.getRotation2d())
                     : new ChassisSpeeds(xSpeed, ySpeed, rot),
                 periodSeconds));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
@@ -83,7 +79,7 @@ public class Drivetrain {
 
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
-    m_poseEstimator.update(
+    m_odometry.update(
         m_gyro.getRotation2d(),
         new SwerveModulePosition[] {
           m_frontLeft.getPosition(),
@@ -91,12 +87,5 @@ public class Drivetrain {
           m_backLeft.getPosition(),
           m_backRight.getPosition()
         });
-
-    // Also apply vision measurements. We use 0.3 seconds in the past as an example -- on
-    // a real robot, this must be calculated based either on latency or timestamps.
-    m_poseEstimator.addVisionMeasurement(
-        ExampleGlobalMeasurementSensor.getEstimatedGlobalPose(
-            m_poseEstimator.getEstimatedPosition()),
-        Timer.getFPGATimestamp() - 0.3);
   }
 }
