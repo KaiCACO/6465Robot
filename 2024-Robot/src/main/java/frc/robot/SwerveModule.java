@@ -83,8 +83,8 @@ public class SwerveModule {
   }
 
   public void printStats() {
-    System.out.println("Turning encoder: " + m_turningMotor.getEncoder().getPosition());
-    System.out.println("Drive encoder: " + m_driveMotor.getEncoder().getPosition());
+    System.out.println("Turning encoder: " + m_turningMotor.getEncoder().getVelocity());
+    System.out.println("Drive encoder: " + m_driveMotor.getEncoder().getVelocity());
   }
 
   /**
