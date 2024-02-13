@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.hardware.Pigeon2;
+
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -26,7 +28,7 @@ public class Drivetrain {
   private final SwerveModule m_backLeft = new SwerveModule(5, 6, 8, 9, 10, 11);
   private final SwerveModule m_backRight = new SwerveModule(7, 8, 12, 13, 14, 15);
 
-  private final AnalogGyro m_gyro = new AnalogGyro(0);
+  private final Pigeon2 m_gyro = new Pigeon2(12);
 
   private final SwerveDriveKinematics m_kinematics =
       new SwerveDriveKinematics(
@@ -45,6 +47,10 @@ public class Drivetrain {
 
   public Drivetrain() {
     m_gyro.reset();
+  }
+
+  public void printStats() {
+    System.out.println(m_gyro.getRotation2d());
   }
 
   /**
