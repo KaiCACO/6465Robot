@@ -11,7 +11,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.wpilibj.AnalogGyro;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
@@ -50,7 +49,8 @@ public class Drivetrain {
   }
 
   public void printStats() {
-    System.out.println(m_gyro.getRotation2d());
+    System.out.println("pos: " + m_backLeft.getPosition());
+    System.out.println("state: " + m_backLeft.getState());
   }
 
   /**
