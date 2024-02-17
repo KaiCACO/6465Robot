@@ -33,11 +33,18 @@ import java.util.List;
  */
 public class RobotContainer {
   // The robot's subsystems
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  public static final DriveSubsystem m_robotDrive = new DriveSubsystem();
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
+  public static void EasyDrive(double leftY, double leftX, double rightX) {
+    RobotContainer.m_robotDrive.drive(
+        -MathUtil.applyDeadband(leftY, OIConstants.kDriveDeadband),
+        -MathUtil.applyDeadband(leftX, OIConstants.kDriveDeadband),
+        -MathUtil.applyDeadband(rightX, OIConstants.kDriveDeadband),
+        true, false);
+  }
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -54,7 +61,7 @@ public class RobotContainer {
                 -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
                 -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
                 -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
-                true, true),
+                true, false),
             m_robotDrive));
   }
 
