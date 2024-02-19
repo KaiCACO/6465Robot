@@ -5,11 +5,14 @@
 package frc.robot;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -21,7 +24,17 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
   private RobotContainer m_robotContainer;
   private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
-  private final Pigeon2 gyro = new Pigeon2(12);
+
+  // CANS 1-8: Drive train
+  private final Pigeon2 gyro = new Pigeon2(42);
+  private final DigitalInput m_ScrewLimitBack = new DigitalInput(0);
+  private final DigitalInput m_ScrewLimitFront = new DigitalInput(1);
+  private final CANSparkMax m_LeadScrew = new CANSparkMax(9, MotorType.kBrushless);
+  private final CANSparkMax m_Intake = new CANSparkMax(10, MotorType.kBrushless);
+  private final CANSparkMax m_ArmLeft = new CANSparkMax(11, MotorType.kBrushless);
+  private final CANSparkMax m_ArmRight = new CANSparkMax(12, MotorType.kBrushed);
+  private final CANSparkMax m_ShooterLeft = new CANSparkMax(13, MotorType.kBrushless);
+  private final CANSparkMax m_ShooterRight = new CANSparkMax(14, MotorType.kBrushless);
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -94,7 +107,55 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    // Controls the drivetrain
     RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
+
+    // Lead screw control
+    if (xbox.getPOV() == 0 && m_ScrewLimitFront.get()) {
+      m_LeadScrew.set(1);
+    }
+    else if (xbox.getPOV() == 180 && m_ScrewLimitBack.get()) {
+      m_LeadScrew.set(-1);
+    }
+    else {
+      m_LeadScrew.set(0);
+    }
+
+    // Intake control
+    if (xbox.getAButton()) {
+      m_Intake.set(1);
+    }
+    else {
+      m_Intake.set(0);
+    }
+
+    // Arm control
+    if (xbox.getLeftTriggerAxis() > 0.1) {
+      m_ArmLeft.set(1);
+      m_ArmRight.set(-1);
+    }
+    else if (xbox.getRightTriggerAxis() > 0.1) {
+      m_ArmLeft.set(-1);
+      m_ArmRight.set(1);
+    }
+    else {
+      m_ArmLeft.set(0);
+      m_ArmRight.set(0);
+    }
+
+    // Shooter control
+    if (xbox.getLeftBumper()) {
+      m_ShooterLeft.set(.8);
+      m_ShooterRight.set(-.8);
+    }
+    else if (xbox.getRightBumper()) {
+      m_ShooterLeft.set(-.8);
+      m_ShooterRight.set(.8);
+    }
+    else {
+      m_ShooterLeft.set(0);
+      m_ShooterRight.set(0);
+    }
   }
 
   @Override
