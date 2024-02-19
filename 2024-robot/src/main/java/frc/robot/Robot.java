@@ -48,6 +48,7 @@ public class Robot extends TimedRobot {
     m_robotContainer = new RobotContainer();
 
     m_Intake.setInverted(true);
+    m_LeadScrew.setInverted(true);
   }
 
   /**
@@ -114,13 +115,10 @@ public class Robot extends TimedRobot {
     RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
 
     // Lead screw control
-    // System.out.println(m_ScrewLimitFront.get());
-    // System.out.println(m_ScrewLimitBack.get());
-
-    if (xbox.getPOV() == 0 && m_ScrewLimitFront.get()) {
+    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
       m_LeadScrew.set(1);
     }
-    else if (xbox.getPOV() == 180 && m_ScrewLimitBack.get()) {
+    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get()) {
       m_LeadScrew.set(-1);
     }
     else {
@@ -129,7 +127,10 @@ public class Robot extends TimedRobot {
 
     // Intake control
     if (xbox.getAButton()) {
-      m_Intake.set(1);
+      m_Intake.set(0.8);
+    }
+    else if (xbox.getYButton()) {
+      m_Intake.set(-0.8);
     }
     else {
       m_Intake.set(0);
@@ -150,11 +151,11 @@ public class Robot extends TimedRobot {
     }
 
     // Shooter control
-    if (xbox.getLeftTriggerAxis() > 0.1) {
+    if (xbox.getLeftTriggerAxis() > 0.02) {
       m_ShooterLeft.set(xbox.getLeftTriggerAxis());
       m_ShooterRight.set(xbox.getLeftTriggerAxis());
     }
-    else if (xbox.getRightTriggerAxis() > 0.1) {
+    else if (xbox.getRightTriggerAxis() > 0.02) {
       m_ShooterLeft.set(-xbox.getRightTriggerAxis());
       m_ShooterRight.set(-xbox.getRightTriggerAxis());
     }
