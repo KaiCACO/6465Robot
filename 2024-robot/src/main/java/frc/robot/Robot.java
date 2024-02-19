@@ -32,9 +32,10 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_LeadScrew = new CANSparkMax(9, MotorType.kBrushless);
   private final CANSparkMax m_Intake = new CANSparkMax(10, MotorType.kBrushless);
   private final CANSparkMax m_ArmLeft = new CANSparkMax(11, MotorType.kBrushless);
-  private final CANSparkMax m_ArmRight = new CANSparkMax(12, MotorType.kBrushed);
+  private final CANSparkMax m_ArmRight = new CANSparkMax(12, MotorType.kBrushless);
   private final CANSparkMax m_ShooterLeft = new CANSparkMax(13, MotorType.kBrushless);
   private final CANSparkMax m_ShooterRight = new CANSparkMax(14, MotorType.kBrushless);
+  
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -45,6 +46,8 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+
+    m_Intake.setInverted(true);
   }
 
   /**
@@ -111,6 +114,9 @@ public class Robot extends TimedRobot {
     RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
 
     // Lead screw control
+    // System.out.println(m_ScrewLimitFront.get());
+    // System.out.println(m_ScrewLimitBack.get());
+
     if (xbox.getPOV() == 0 && m_ScrewLimitFront.get()) {
       m_LeadScrew.set(1);
     }
@@ -130,11 +136,11 @@ public class Robot extends TimedRobot {
     }
 
     // Arm control
-    if (xbox.getLeftTriggerAxis() > 0.1) {
+    if (xbox.getLeftBumper()) {
       m_ArmLeft.set(1);
       m_ArmRight.set(-1);
     }
-    else if (xbox.getRightTriggerAxis() > 0.1) {
+    else if (xbox.getRightBumper()) {
       m_ArmLeft.set(-1);
       m_ArmRight.set(1);
     }
@@ -144,13 +150,13 @@ public class Robot extends TimedRobot {
     }
 
     // Shooter control
-    if (xbox.getLeftBumper()) {
-      m_ShooterLeft.set(.8);
-      m_ShooterRight.set(-.8);
+    if (xbox.getLeftTriggerAxis() > 0.1) {
+      m_ShooterLeft.set(xbox.getLeftTriggerAxis());
+      m_ShooterRight.set(xbox.getLeftTriggerAxis());
     }
-    else if (xbox.getRightBumper()) {
-      m_ShooterLeft.set(-.8);
-      m_ShooterRight.set(.8);
+    else if (xbox.getRightTriggerAxis() > 0.1) {
+      m_ShooterLeft.set(-xbox.getRightTriggerAxis());
+      m_ShooterRight.set(-xbox.getRightTriggerAxis());
     }
     else {
       m_ShooterLeft.set(0);
