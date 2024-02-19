@@ -101,10 +101,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -141,12 +137,12 @@ public class Robot extends TimedRobot {
 
     // Arm control
     if (xbox.getLeftBumper()) {
-      m_ArmLeft.set(1);
-      m_ArmRight.set(-1);
+      m_ArmLeft.set(0.5);
+      m_ArmRight.set(-0.5);
     }
     else if (xbox.getRightBumper()) {
-      m_ArmLeft.set(-1);
-      m_ArmRight.set(1);
+      m_ArmLeft.set(-0.5);
+      m_ArmRight.set(0.5);
     }
     else {
       m_ArmLeft.set(0);
