@@ -11,6 +11,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DigitalInput;
 
@@ -26,15 +27,15 @@ public class Robot extends TimedRobot {
   private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
 
   // CANS 1-8: Drive train
-  private final Pigeon2 gyro = new Pigeon2(42);
-  private final DigitalInput m_ScrewLimitBack = new DigitalInput(0);
-  private final DigitalInput m_ScrewLimitFront = new DigitalInput(1);
-  private final CANSparkMax m_LeadScrew = new CANSparkMax(9, MotorType.kBrushless);
-  private final CANSparkMax m_Intake = new CANSparkMax(10, MotorType.kBrushless);
-  private final CANSparkMax m_ArmLeft = new CANSparkMax(11, MotorType.kBrushless);
-  private final CANSparkMax m_ArmRight = new CANSparkMax(12, MotorType.kBrushless);
-  private final CANSparkMax m_ShooterLeft = new CANSparkMax(13, MotorType.kBrushless);
-  private final CANSparkMax m_ShooterRight = new CANSparkMax(14, MotorType.kBrushless);
+  private final Pigeon2 gyro = new Pigeon2(DriveConstants.kGyroCanId);
+  private final DigitalInput m_ScrewLimitBack = new DigitalInput(DriveConstants.kBackScrewLimitChannel);
+  private final DigitalInput m_ScrewLimitFront = new DigitalInput(DriveConstants.kFrontScrewLimitChannel);
+  private final CANSparkMax m_LeadScrew = new CANSparkMax(DriveConstants.kLeadScrewCanId, MotorType.kBrushless);
+  private final CANSparkMax m_Intake = new CANSparkMax(DriveConstants.kIntakeCanId, MotorType.kBrushless);
+  private final CANSparkMax m_ArmLeft = new CANSparkMax(DriveConstants.kArmLeftCanId, MotorType.kBrushless);
+  private final CANSparkMax m_ArmRight = new CANSparkMax(DriveConstants.kArmRightCanId, MotorType.kBrushless);
+  private final CANSparkMax m_ShooterLeft = new CANSparkMax(DriveConstants.kShooterLeftCanId, MotorType.kBrushless);
+  private final CANSparkMax m_ShooterRight = new CANSparkMax(DriveConstants.kShooterRightCanId, MotorType.kBrushless);
   
 
   /**
@@ -47,6 +48,8 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
 
+    m_ShooterLeft.setInverted(true);
+    m_ShooterRight.setInverted(true);
     m_Intake.setInverted(true);
     m_LeadScrew.setInverted(true);
   }

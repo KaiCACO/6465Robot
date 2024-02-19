@@ -62,7 +62,17 @@ public final class Constants {
     public static final int kFrontRightTurningCanId = 4;
     public static final int kRearRightTurningCanId = 8;
 
-    public static final boolean kGyroReversed = false;
+    public static final int kLeadScrewCanId = 9;
+    public static final int kIntakeCanId = 10;
+    public static final int kArmLeftCanId = 11;
+    public static final int kArmRightCanId = 12;
+    public static final int kShooterLeftCanId = 13;
+    public static final int kShooterRightCanId = 14;
+
+    public static final int kBackScrewLimitChannel = 0;
+    public static final int kFrontScrewLimitChannel = 1;
+    public static final int kGyroCanId = 42;
+    public static final boolean kGyroReversed = true;
   }
 
   public static final class ModuleConstants {
