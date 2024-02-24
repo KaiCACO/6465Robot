@@ -70,6 +70,12 @@ public class Robot extends TimedRobot {
   }
 
   @Override
+  public void teleopPeriodic() {
+    m_rightMotor.set(0);
+    m_leftMotor.set(0);
+  }
+
+  @Override
   public void testPeriodic() {
     double power = Math.abs(x/120);
     power = Math.pow(power, 0.4);
