@@ -26,3 +26,11 @@ class Table():
             print("Invalid table entry!")
         
         return output
+    
+    def put(self, key, value):
+        print(f"putting {key, value}")
+        try:
+            self.sd.putNumber(key, value)
+        except:
+            print(f"Typeerror: {value} is not a number! Key: {key}")
+

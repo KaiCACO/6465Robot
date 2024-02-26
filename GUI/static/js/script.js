@@ -4,10 +4,13 @@ function submitForm(id) {
     console.log(vals);
     sendMessage(vals);
 }
-var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+var address = 'http://' + document.domain + ':' + location.port;
+var socket = io.connect(address);
 
 socket.on('connect', () => {
-    console.log('Connected to the backend via WebSocket');
+    console.log(`Connected to the backend via ${address}`);
+    sendMessage("handshake")
 });
 
 function sendMessage(message) {
