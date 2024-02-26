@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
+import nwtez
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -11,7 +12,6 @@ def page():
 @socketio.on('message_from_frontend')
 def handle_message(message):
     print(f"Received message from frontend: {message}")
-    socketio.emit('message_from_backend', 'Message received on the backend')
 
 def run():
     socketio.run(app, debug=False)
