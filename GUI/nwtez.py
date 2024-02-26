@@ -7,7 +7,7 @@ def connectionListener(connected, info):
     print(info, "; Connected=%s" % connected)
 
 class Table():
-    def __init__(self, onChange : function, ip : str='roborio-6465-frc.local'):
+    def __init__(self, onChange, ip : str='roborio-6465-frc.local'):
         NetworkTables.initialize(server=ip)
 
         self.onChange = onChange
