@@ -52,6 +52,7 @@ public class Robot extends TimedRobot {
     m_ShooterRight.setInverted(true);
     m_Intake.setInverted(true);
     m_LeadScrew.setInverted(true);
+    m_ArmLeft.setInverted(true);
   }
 
   /**

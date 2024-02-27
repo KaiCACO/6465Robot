@@ -34,14 +34,14 @@ def handle_message(message):
 
 async def nwtUpdater(emit):
     while True:
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.2)
         emit("message_from_backend", update())
 
 def update():
     tx = robotTable.get("LimelightX")
     ty = robotTable.get("LimelightY")
     try:
-        tz = float(0.23 * math.tan(float(ty) * DEGREES_TO_RAD))
+        tz = float(500 * 0.23 * math.tan(float(ty) * DEGREES_TO_RAD))
     except:
         tz = "0"
     ta = robotTable.get("LimelightArea")
