@@ -2,10 +2,15 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO
 from nwtez import Table
 import asyncio
-import logging
+import math
+
+
+LIMELIGHT_HEIGHT = 23
+DEGREES_TO_RAD = math.pi / 180
 
 def valueChanged(table, key, value, isNew):
-    print("valueChanged: key: '%s'; value: '%s'; isNew: '%s'" % (key, value, isNew))
+    "penis"
+    # print("valueChanged: key: '%s'; value: '%s'; isNew: '%s'" % (key, value, isNew))
 
 robotTable = Table(valueChanged)
 
@@ -19,19 +24,28 @@ def page():
 @socketio.on('message_from_frontend')
 def handle_message(message):
     if message == "handshake":
-        print("handshake recieved!")
         asyncio.run(nwtUpdater(socketio.emit))
-    try:
-        print(f"Received message from frontend: {message}")
-        for key, value in message.items():
-            robotTable.put(key, value)
-    except TypeError:
-        print(f"TypeError! Message is not dict. Message: {message}")
+    else:
+        try:
+            for key, value in message.items():
+                robotTable.put(f"py_{key}", value)
+        except TypeError:
+            print(f"TypeError! Message is not dict. Message: {message}")
 
 async def nwtUpdater(emit):
     while True:
         await asyncio.sleep(1)
-        emit("message_from_backend", "Update")
+        emit("message_from_backend", update())
+
+def update():
+    tx = robotTable.get("LimelightX")
+    ty = robotTable.get("LimelightY")
+    try:
+        tz = float(0.23 * math.tan(float(ty) * DEGREES_TO_RAD))
+    except:
+        tz = "0"
+    ta = robotTable.get("LimelightArea")
+    return {"tx": tx, "ty": ty, "tz": tz, "ta": ta}
 
 def run():
     socketio.run(app, debug=False)

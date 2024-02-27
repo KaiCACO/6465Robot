@@ -7,30 +7,18 @@ def connectionListener(connected, info):
     print(info, "; Connected=%s" % connected)
 
 class Table():
-    def __init__(self, onChange, ip : str='roborio-6465-frc.local'):
+    def __init__(self, onChange = None, ip : str='roborio-6465-frc.local'):
         NetworkTables.initialize(server=ip)
 
-        self.onChange = onChange
+        if onChange is not None:
+            self.onChange = onChange
         NetworkTables.addConnectionListener(connectionListener)
 
         self.sd = NetworkTables.getTable("SmartDashboard")
         self.sd.addEntryListener(onChange)
     
-    def get(self, option : str, getType : str = "number"):
-        output = None
-
-        if getType == "number":
-            output = self.sd.getNumber(option)
-
-        if not output:
-            print("Invalid table entry!")
-        
-        return output
+    def get(self, key : str):
+        return self.sd.getValue(key, "0")
     
-    def put(self, key, value):
-        print(f"putting {key, value}")
-        try:
-            self.sd.putNumber(key, value)
-        except:
-            print(f"Typeerror: {value} is not a number! Key: {key}")
-
+    def put(self, key : str, value : str):
+        self.sd.putString(key, value)
