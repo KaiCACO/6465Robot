@@ -36,7 +36,7 @@ socket.on('message_from_backend', (message) => {
 });
 
 function updateUI() {
-    var t = `translate(${tx + 50}vw, ${-tz}vw)`;
+    var t = `translate(calc(${5*tx}px + 50vw), ${-5*tz}px)`;
     console.log(t);
     document.getElementById("target").style.transform = t;
 }
