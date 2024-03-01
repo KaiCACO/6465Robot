@@ -35,6 +35,8 @@ class TableTest():
         self.sd = NetworkTables.getTable("SmartDashboard")
         self.sd.addEntryListener(onChange)
 
+        logging.log("USING TEST TABLE, INNACURATE VALUES")
+
     def get(self, key : str):
         return random.randrange(-27, 27)
     

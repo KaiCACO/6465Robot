@@ -1,10 +1,12 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
-from nwtez import TableTest as Table
+from nwtez import Table
+# from nwtez import TableTest as Table
 import asyncio
 import math
 import mathy_utils
 from mathy_utils import shorten
+import logging
 
 
 LIMELIGHT_HEIGHT = 0.23
@@ -19,7 +21,7 @@ current_z = 0
 
 def valueChanged(table, key, value, isNew):
     if app.debug:
-        print("valueChanged: key: '%s'; value: '%s'; isNew: '%s'" % (key, value, isNew))
+        logging.log("valueChanged: key: '%s'; value: '%s'; isNew: '%s'" % (key, value, isNew))
 
 robotTable = Table(valueChanged)
 

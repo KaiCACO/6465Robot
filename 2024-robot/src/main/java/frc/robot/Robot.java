@@ -9,6 +9,7 @@ import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
@@ -36,6 +37,13 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_ArmRight = new CANSparkMax(DriveConstants.kArmRightCanId, MotorType.kBrushless);
   private final CANSparkMax m_ShooterLeft = new CANSparkMax(DriveConstants.kShooterLeftCanId, MotorType.kBrushless);
   private final CANSparkMax m_ShooterRight = new CANSparkMax(DriveConstants.kShooterRightCanId, MotorType.kBrushless);
+
+  private int autoAmp = 0;
+  private Timer ampAutoTimer = new Timer();
+
+  private boolean isBetween(Timer timer, double start, double end) {
+    return timer.get() >= start && timer.get() <= end;
+  }
   
 
   /**
@@ -112,13 +120,15 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     // Controls the drivetrain
-    RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
+    if (autoAmp == 0) {
+      RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
+    }
 
     // Lead screw control
-    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
+    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get() && autoAmp == 0) {
       m_LeadScrew.set(1);
     }
-    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get()) {
+    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get() && autoAmp == 0) {
       m_LeadScrew.set(-1);
     }
     else {
@@ -162,6 +172,53 @@ public class Robot extends TimedRobot {
     else {
       m_ShooterLeft.set(0);
       m_ShooterRight.set(0);
+    }
+
+    // Auto functions
+    if (xbox.getRawButton(7)) {
+      if (autoAmp == 0) {
+        ampAutoTimer.reset();
+        ampAutoTimer.start();
+        autoAmp = 1;
+      }
+
+      m_ShooterLeft.set(-0.2);
+      m_ShooterRight.set(-0.2);
+
+      if (!m_ScrewLimitFront.get()) {
+        m_LeadScrew.set(0.5);
+      }
+      else if (autoAmp == 1) {
+        autoAmp = 2;
+        ampAutoTimer.reset();
+        ampAutoTimer.start();
+      }
+      else {
+        m_LeadScrew.set(0);
+      }
+
+      if (autoAmp == 1) {
+        if (isBetween(ampAutoTimer, 0, 0.2)) {
+          RobotContainer.EasyDrive(.5, 0, 0);
+        }
+        else if (isBetween(ampAutoTimer, 0.2, 0.4)) {
+          RobotContainer.EasyDrive(-.5, 0, 0);
+        }
+      }
+
+      else if (autoAmp == 2) {
+        if (isBetween(ampAutoTimer, 0, 0.7)) {
+          m_Intake.set(-.5);
+        }
+        else {
+          m_Intake.set(1);
+        }
+      }
+    }
+    else {
+      autoAmp = 0;
+      ampAutoTimer.stop();
+      ampAutoTimer.reset();
     }
   }
 
