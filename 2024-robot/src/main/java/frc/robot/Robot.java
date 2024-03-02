@@ -16,6 +16,10 @@ import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DigitalInput;
 
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -38,6 +42,9 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_ShooterLeft = new CANSparkMax(DriveConstants.kShooterLeftCanId, MotorType.kBrushless);
   private final CANSparkMax m_ShooterRight = new CANSparkMax(DriveConstants.kShooterRightCanId, MotorType.kBrushless);
 
+  private final DoubleSolenoid m_armBreak = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kArmBreakSolenoidPort, DriveConstants.kArmBreakSolenoidPort2);
+  private final Compressor m_compressor = new Compressor(PneumaticsModuleType.REVPH);
+
   private int autoAmp = 0;
   private Timer ampAutoTimer = new Timer();
 
@@ -55,6 +62,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+    m_compressor.enableDigital();
 
     m_ShooterLeft.setInverted(true);
     m_ShooterRight.setInverted(true);
@@ -150,14 +158,17 @@ public class Robot extends TimedRobot {
     if (xbox.getLeftBumper()) {
       m_ArmLeft.set(0.5);
       m_ArmRight.set(-0.5);
+      m_armBreak.set(DoubleSolenoid.Value.kForward);
     }
     else if (xbox.getRightBumper()) {
       m_ArmLeft.set(-0.5);
       m_ArmRight.set(0.5);
+      m_armBreak.set(DoubleSolenoid.Value.kForward);
     }
     else {
       m_ArmLeft.set(0);
       m_ArmRight.set(0);
+      m_armBreak.set(DoubleSolenoid.Value.kReverse);
     }
 
     // Shooter control
