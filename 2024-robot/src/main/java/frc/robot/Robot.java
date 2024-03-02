@@ -31,7 +31,7 @@ public class Robot extends TimedRobot {
   private RobotContainer m_robotContainer;
   private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
 
-  // CANS 1-8: Drive train
+  // Motors/sensors
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.kGyroCanId);
   private final DigitalInput m_ScrewLimitBack = new DigitalInput(DriveConstants.kBackScrewLimitChannel);
   private final DigitalInput m_ScrewLimitFront = new DigitalInput(DriveConstants.kFrontScrewLimitChannel);
@@ -42,7 +42,9 @@ public class Robot extends TimedRobot {
   private final CANSparkMax m_ShooterLeft = new CANSparkMax(DriveConstants.kShooterLeftCanId, MotorType.kBrushless);
   private final CANSparkMax m_ShooterRight = new CANSparkMax(DriveConstants.kShooterRightCanId, MotorType.kBrushless);
 
-  private final DoubleSolenoid m_armBreak = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kArmBreakSolenoidPort, DriveConstants.kArmBreakSolenoidPort2);
+  // Other
+  private final DoubleSolenoid m_armLeftBreak = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kArmLeftBreakPort, DriveConstants.kArmLeftBreakPort2);
+  private final DoubleSolenoid m_armRightBreak = new DoubleSolenoid(PneumaticsModuleType.REVPH, DriveConstants.kArmRightBreakPort, DriveConstants.kArmRightBreakPort2);
   private final Compressor m_compressor = new Compressor(PneumaticsModuleType.REVPH);
 
   private int autoAmp = 0;
@@ -78,6 +80,7 @@ public class Robot extends TimedRobot {
    * <p>This runs after the mode specific periodic functions, but before LiveWindow and
    * SmartDashboard integrated updating.
    */
+  
   @Override
   public void robotPeriodic() {
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
@@ -122,6 +125,8 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     gyro.reset();
+    m_armLeftBreak.set(DoubleSolenoid.Value.kForward);
+    m_armRightBreak.set(DoubleSolenoid.Value.kForward);
   }
 
   /** This function is called periodically during operator control. */
@@ -155,20 +160,37 @@ public class Robot extends TimedRobot {
     }
 
     // Arm control
-    if (xbox.getLeftBumper()) {
-      m_ArmLeft.set(0.5);
-      m_ArmRight.set(-0.5);
-      m_armBreak.set(DoubleSolenoid.Value.kForward);
+    if (xbox.getLeftBumper() || xbox.getRightBumper()) {
+      m_armLeftBreak.set(DoubleSolenoid.Value.kReverse);
+      m_armRightBreak.set(DoubleSolenoid.Value.kReverse);
     }
-    else if (xbox.getRightBumper()) {
-      m_ArmLeft.set(-0.5);
-      m_ArmRight.set(0.5);
-      m_armBreak.set(DoubleSolenoid.Value.kForward);
+    else {
+      m_armLeftBreak.set(DoubleSolenoid.Value.kForward);
+      m_armRightBreak.set(DoubleSolenoid.Value.kForward);
+    }
+
+    if (xbox.getLeftBumper()) {
+      if (xbox.getXButton()) {
+        m_ArmLeft.set(-0.5);
+      }
+      else {
+        m_ArmLeft.set(0.5);
+      }
     }
     else {
       m_ArmLeft.set(0);
+    }
+    
+    if (xbox.getRightBumper()) {
+      if (xbox.getXButton()) {
+        m_ArmRight.set(-0.5);
+      }
+      else {
+        m_ArmRight.set(0.5);
+      }
+    }
+    else {
       m_ArmRight.set(0);
-      m_armBreak.set(DoubleSolenoid.Value.kReverse);
     }
 
     // Shooter control
