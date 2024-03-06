@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DigitalInput;
 
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -50,9 +51,11 @@ public class Robot extends TimedRobot {
   private int autoAmp = 0;
   private Timer ampAutoTimer = new Timer();
 
-  private boolean isBetween(Timer timer, double start, double end) {
-    return timer.get() >= start && timer.get() <= end;
-  }
+  private int autoSpeak = 0;
+  private Timer speakAutoTimer = new Timer();
+
+  private boolean toggleLock = false;
+  private boolean bTogCon = false;
   
 
   /**
@@ -61,8 +64,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
-    // autonomous chooser on the dashboard.
+    m_LeadScrew.getEncoder().setPositionConversionFactor(1/117.44);
     m_robotContainer = new RobotContainer();
     m_compressor.enableDigital();
 
@@ -71,6 +73,7 @@ public class Robot extends TimedRobot {
     m_Intake.setInverted(true);
     m_LeadScrew.setInverted(true);
     m_ArmLeft.setInverted(true);
+    m_ArmRight.setInverted(true);
   }
 
   /**
@@ -125,32 +128,152 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
     gyro.reset();
-    m_armLeftBreak.set(DoubleSolenoid.Value.kForward);
-    m_armRightBreak.set(DoubleSolenoid.Value.kForward);
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    // Controls the drivetrain
-    if (autoAmp == 0) {
-      RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX());
+
+    // System.out.println("Back screw limit: " + m_ScrewLimitBack.get());
+    // System.out.println("Frpnt screw limit: " + m_ScrewLimitFront.get());
+    // System.out.println("AutoAmp: " + autoAmp);
+    // System.out.println("AmpTimer: " + ampAutoTimer.get());
+    System.out.println(m_LeadScrew.getEncoder().getPosition());
+
+    // Manual controls
+    if(!xbox.getRawButton(7) && !xbox.getRawButton(8)){
+      autoAmp = 0;
+      autoSpeak = 0;
+      ampAutoTimer.stop();
+      manualControls();
     }
 
-    // Lead screw control
-    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get() && autoAmp == 0) {
-      m_LeadScrew.set(1);
+    // Auto functions
+    else if (xbox.getRawButton(7) && !xbox.getRawButton(8)) {
+      autoSpeak = 0;
+
+      if (autoAmp == 0) {
+        ampAutoTimer.reset();
+        ampAutoTimer.start();
+        autoAmp = 1;
+      }
+      var t = ampAutoTimer.get();
+
+      m_ShooterLeft.set(-0.2);
+      m_ShooterRight.set(-0.2);
+
+      if (!m_ScrewLimitFront.get()) {
+        m_LeadScrew.set(0.5);
+      }
+      else {
+        m_LeadScrew.set(0);
+      }
+
+      if (autoAmp == 1) {
+        if (t <= 0.4) {
+          System.out.println(t);
+          RobotContainer.EasyDrive(0.5, 0, 0, false);
+        }
+        else if (m_ScrewLimitFront.get()) {
+          ampAutoTimer.reset();
+          ampAutoTimer.start();
+          autoAmp = 2;
+        }
+      }
+
+      else if (autoAmp == 2) {
+        RobotContainer.EasyDrive(0, 0, 0, false);
+        if (t <= 0.2) {
+          m_Intake.set(-.5);
+        }
+        else {
+          m_Intake.set(1);
+        }
+      }
     }
-    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get() && autoAmp == 0) {
-      m_LeadScrew.set(-1);
+
+    else if (xbox.getRawButton(8)) {
+      autoAmp = 0;
+      RobotContainer.EasyDrive(0, 0, 0, false);
+
+      if (autoSpeak == 0) {
+        speakAutoTimer.reset();
+        speakAutoTimer.start();
+        autoSpeak = 1;
+      }
+      var t = speakAutoTimer.get();
+
+      m_ShooterLeft.set(-0.35);
+      m_ShooterRight.set(-0.35);
+
+      if (!m_ScrewLimitBack.get()) {
+        m_LeadScrew.set(-0.5);
+      }
+      else {
+        m_LeadScrew.set(0);
+      }
+
+      if (autoSpeak == 1) {
+        if (m_ScrewLimitBack.get()) {
+          speakAutoTimer.reset();
+          speakAutoTimer.start();
+          autoSpeak = 2;
+        }
+      }
+
+      else if (autoSpeak == 2) {
+        if (t <= 0.2) {
+          m_Intake.set(-.5);
+        }
+        else {
+          m_Intake.set(1);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void testInit() {
+    // Cancels all running commands at the start of test mode.
+    CommandScheduler.getInstance().cancelAll();
+  }
+
+  /** This function is called periodically during test mode. */
+  @Override
+  public void testPeriodic() {}
+
+  private void manualControls() {
+    // Controls the drivetrain
+    RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX(), true);
+
+    // Lead screw control
+    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
+      m_LeadScrew.set(.5);
+    }
+    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get()) {
+      m_LeadScrew.set(-.5);
     }
     else {
       m_LeadScrew.set(0);
     }
+    if (m_ScrewLimitBack.get()) {
+      m_LeadScrew.getEncoder().setPosition(0);
+    }
+    if (m_ScrewLimitFront.get()) {
+      var convFac = m_LeadScrew.getEncoder().getPositionConversionFactor();
+      var encPos = m_LeadScrew.getEncoder().getPosition();
+      var newFac = (1/(encPos/convFac))*convFac;
+      // m_LeadScrew.getEncoder().setPositionConversionFactor(newFac);
+    }
 
     // Intake control
     if (xbox.getAButton()) {
-      m_Intake.set(0.8);
+      if (m_LeadScrew.getEncoder().getPosition() < 0.6) {
+        m_Intake.set(0.8);
+      }
+      else {
+        m_LeadScrew.set(-0.5);
+      }
     }
     else if (xbox.getYButton()) {
       m_Intake.set(-0.8);
@@ -160,15 +283,6 @@ public class Robot extends TimedRobot {
     }
 
     // Arm control
-    if (xbox.getLeftBumper() || xbox.getRightBumper()) {
-      m_armLeftBreak.set(DoubleSolenoid.Value.kReverse);
-      m_armRightBreak.set(DoubleSolenoid.Value.kReverse);
-    }
-    else {
-      m_armLeftBreak.set(DoubleSolenoid.Value.kForward);
-      m_armRightBreak.set(DoubleSolenoid.Value.kForward);
-    }
-
     if (xbox.getLeftBumper()) {
       if (xbox.getXButton()) {
         m_ArmLeft.set(-0.5);
@@ -193,75 +307,39 @@ public class Robot extends TimedRobot {
       m_ArmRight.set(0);
     }
 
+    // Arm lock control
+    if (toggleLock) {
+      m_armLeftBreak.set(Value.kForward);
+      m_armRightBreak.set(Value.kForward);
+    }
+    else {
+      m_armLeftBreak.set(Value.kReverse);
+      m_armRightBreak.set(Value.kReverse);
+    }
+
     // Shooter control
+    double shooterDamp = 1.8;
     if (xbox.getLeftTriggerAxis() > 0.02) {
-      m_ShooterLeft.set(xbox.getLeftTriggerAxis());
-      m_ShooterRight.set(xbox.getLeftTriggerAxis());
+      m_ShooterLeft.set(xbox.getLeftTriggerAxis()/shooterDamp);
+      m_ShooterRight.set(xbox.getLeftTriggerAxis()/shooterDamp);
     }
     else if (xbox.getRightTriggerAxis() > 0.02) {
-      m_ShooterLeft.set(-xbox.getRightTriggerAxis());
-      m_ShooterRight.set(-xbox.getRightTriggerAxis());
+      m_ShooterLeft.set(-xbox.getRightTriggerAxis()/shooterDamp);
+      m_ShooterRight.set(-xbox.getRightTriggerAxis()/shooterDamp);
     }
     else {
       m_ShooterLeft.set(0);
       m_ShooterRight.set(0);
     }
 
-    // Auto functions
-    if (xbox.getRawButton(7)) {
-      if (autoAmp == 0) {
-        ampAutoTimer.reset();
-        ampAutoTimer.start();
-        autoAmp = 1;
-      }
-
-      m_ShooterLeft.set(-0.2);
-      m_ShooterRight.set(-0.2);
-
-      if (!m_ScrewLimitFront.get()) {
-        m_LeadScrew.set(0.5);
-      }
-      else if (autoAmp == 1) {
-        autoAmp = 2;
-        ampAutoTimer.reset();
-        ampAutoTimer.start();
-      }
-      else {
-        m_LeadScrew.set(0);
-      }
-
-      if (autoAmp == 1) {
-        if (isBetween(ampAutoTimer, 0, 0.2)) {
-          RobotContainer.EasyDrive(.5, 0, 0);
-        }
-        else if (isBetween(ampAutoTimer, 0.2, 0.4)) {
-          RobotContainer.EasyDrive(-.5, 0, 0);
-        }
-      }
-
-      else if (autoAmp == 2) {
-        if (isBetween(ampAutoTimer, 0, 0.7)) {
-          m_Intake.set(-.5);
-        }
-        else {
-          m_Intake.set(1);
-        }
-      }
+    // Toggle breaks
+    if (xbox.getBButton() && !bTogCon) {
+      System.out.println(bTogCon);
+      bTogCon = true;
+      toggleLock = !toggleLock;
     }
-    else {
-      autoAmp = 0;
-      ampAutoTimer.stop();
-      ampAutoTimer.reset();
+    else if (!xbox.getBButton()) {
+      bTogCon = false;
     }
   }
-
-  @Override
-  public void testInit() {
-    // Cancels all running commands at the start of test mode.
-    CommandScheduler.getInstance().cancelAll();
-  }
-
-  /** This function is called periodically during test mode. */
-  @Override
-  public void testPeriodic() {}
 }
