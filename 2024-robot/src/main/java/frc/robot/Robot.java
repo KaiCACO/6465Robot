@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -116,14 +118,8 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-
-    /*
-     * String autoSelected = SmartDashboard.getString("Auto Selector",
-     * "Default"); switch(autoSelected) { case "My Auto": autonomousCommand
-     * = new MyAutoCommand(); break; case "Default Auto": default:
-     * autonomousCommand = new ExampleCommand(); break; }
-     */
+    m_autonomousCommand = m_robotContainer.backward();
+    
 
     // schedule the autonomous command (example)
     if (m_autonomousCommand != null) {
@@ -181,7 +177,7 @@ public class Robot extends TimedRobot {
 
     // Auto functions
     else if (ampTog) {
-      m_robotContainer.EasyDrive(0, 0, 0, true);
+      m_robotContainer.EasyDrive(0, 0, 0, false);
       xbox.setRumble(RumbleType.kLeftRumble, 0.3);
       autoSpeak = 0;
 
@@ -301,7 +297,7 @@ public class Robot extends TimedRobot {
 
     // Intake control
     if (xbox.getAButton()) {
-      if (m_LeadScrew.getEncoder().getPosition() > 0.4) {
+      if (m_LeadScrew.getEncoder().getPosition() > 0.35) {
         m_LeadScrew.set(-0.5);
       }
       else {
