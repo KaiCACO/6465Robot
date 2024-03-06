@@ -36,7 +36,7 @@ public class RobotContainer {
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
-  public static void EasyDrive(double leftY, double leftX, double rightX, boolean fieldDrive) {
+  public void EasyDrive(double leftY, double leftX, double rightX, boolean fieldDrive) {
     RobotContainer.m_robotDrive.drive(
         -MathUtil.applyDeadband(leftY, OIConstants.kDriveDeadband),
         -MathUtil.applyDeadband(leftX, OIConstants.kDriveDeadband),

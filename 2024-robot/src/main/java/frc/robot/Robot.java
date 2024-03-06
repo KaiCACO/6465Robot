@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -56,6 +57,11 @@ public class Robot extends TimedRobot {
 
   private boolean toggleLock = false;
   private boolean bTogCon = false;
+  private boolean sevenTog = false;
+  private boolean ampTog = false;
+  private boolean eightTog = false;
+  private boolean speakerTog = false;
+
   
 
   /**
@@ -95,7 +101,14 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    ampTog = false;
+    speakerTog = false;
+    sevenTog = false;
+    eightTog = false;
+    autoAmp = 0;
+    autoSpeak = 0;
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -138,10 +151,28 @@ public class Robot extends TimedRobot {
     // System.out.println("Frpnt screw limit: " + m_ScrewLimitFront.get());
     // System.out.println("AutoAmp: " + autoAmp);
     // System.out.println("AmpTimer: " + ampAutoTimer.get());
-    System.out.println(m_LeadScrew.getEncoder().getPosition());
+    // System.out.println(m_LeadScrew.getEncoder().getPosition());
+    // System.out.println(ampTog);
+
+    if (xbox.getRawButton(7) && !sevenTog && !speakerTog) {
+      sevenTog = true;
+      ampTog = !ampTog;
+    }
+    else if (!xbox.getRawButton(7)) {
+      sevenTog = false;
+    }
+
+    if (xbox.getRawButton(8) && !eightTog && !ampTog) {
+      eightTog = true;
+      speakerTog = !speakerTog;
+    }
+    else if (!xbox.getRawButton(8)) {
+      eightTog = false;
+    }
 
     // Manual controls
-    if(!xbox.getRawButton(7) && !xbox.getRawButton(8)){
+    if(!ampTog && !speakerTog){
+      xbox.setRumble(RumbleType.kBothRumble, 0);
       autoAmp = 0;
       autoSpeak = 0;
       ampAutoTimer.stop();
@@ -149,7 +180,9 @@ public class Robot extends TimedRobot {
     }
 
     // Auto functions
-    else if (xbox.getRawButton(7) && !xbox.getRawButton(8)) {
+    else if (ampTog) {
+      m_robotContainer.EasyDrive(0, 0, 0, true);
+      xbox.setRumble(RumbleType.kLeftRumble, 0.3);
       autoSpeak = 0;
 
       if (autoAmp == 0) {
@@ -159,8 +192,8 @@ public class Robot extends TimedRobot {
       }
       var t = ampAutoTimer.get();
 
-      m_ShooterLeft.set(-0.2);
-      m_ShooterRight.set(-0.2);
+      m_ShooterLeft.set(-0.17);
+      m_ShooterRight.set(-0.17);
 
       if (!m_ScrewLimitFront.get()) {
         m_LeadScrew.set(0.5);
@@ -170,9 +203,8 @@ public class Robot extends TimedRobot {
       }
 
       if (autoAmp == 1) {
-        if (t <= 0.4) {
-          System.out.println(t);
-          RobotContainer.EasyDrive(0.5, 0, 0, false);
+        if (t <= 1) {
+          m_robotContainer.EasyDrive(0.4, 0, 0, true);
         }
         else if (m_ScrewLimitFront.get()) {
           ampAutoTimer.reset();
@@ -182,7 +214,7 @@ public class Robot extends TimedRobot {
       }
 
       else if (autoAmp == 2) {
-        RobotContainer.EasyDrive(0, 0, 0, false);
+        m_robotContainer.EasyDrive(0, 0, 0, false);
         if (t <= 0.2) {
           m_Intake.set(-.5);
         }
@@ -192,9 +224,10 @@ public class Robot extends TimedRobot {
       }
     }
 
-    else if (xbox.getRawButton(8)) {
+    else if (speakerTog) {
+      xbox.setRumble(RumbleType.kRightRumble, 0.3);
       autoAmp = 0;
-      RobotContainer.EasyDrive(0, 0, 0, false);
+      m_robotContainer.EasyDrive(0, 0, 0, true);
 
       if (autoSpeak == 0) {
         speakAutoTimer.reset();
@@ -203,8 +236,8 @@ public class Robot extends TimedRobot {
       }
       var t = speakAutoTimer.get();
 
-      m_ShooterLeft.set(-0.35);
-      m_ShooterRight.set(-0.35);
+      m_ShooterLeft.set(-0.6);
+      m_ShooterRight.set(-0.6);
 
       if (!m_ScrewLimitBack.get()) {
         m_LeadScrew.set(-0.5);
@@ -244,7 +277,7 @@ public class Robot extends TimedRobot {
 
   private void manualControls() {
     // Controls the drivetrain
-    RobotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX(), true);
+    m_robotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX(), true);
 
     // Lead screw control
     if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
@@ -268,11 +301,11 @@ public class Robot extends TimedRobot {
 
     // Intake control
     if (xbox.getAButton()) {
-      if (m_LeadScrew.getEncoder().getPosition() < 0.6) {
-        m_Intake.set(0.8);
+      if (m_LeadScrew.getEncoder().getPosition() > 0.4) {
+        m_LeadScrew.set(-0.5);
       }
       else {
-        m_LeadScrew.set(-0.5);
+        m_Intake.set(0.8);
       }
     }
     else if (xbox.getYButton()) {
@@ -334,12 +367,17 @@ public class Robot extends TimedRobot {
 
     // Toggle breaks
     if (xbox.getBButton() && !bTogCon) {
-      System.out.println(bTogCon);
       bTogCon = true;
       toggleLock = !toggleLock;
     }
     else if (!xbox.getBButton()) {
       bTogCon = false;
+    }
+    if (xbox.getBButton() && toggleLock) {
+      xbox.setRumble(RumbleType.kBothRumble, 0.6);
+    }
+    else {
+      xbox.setRumble(RumbleType.kBothRumble, 0);
     }
   }
 }
