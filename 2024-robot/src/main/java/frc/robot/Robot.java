@@ -53,6 +53,8 @@ public class Robot extends TimedRobot {
   private int autoSpeak = 0;
   private Timer speakAutoTimer = new Timer();
   private Timer autoTimer = new Timer();
+  
+  private String autoLocation;
 
   private boolean toggleLock = false;
   private boolean bTogCon = false;
@@ -115,6 +117,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    autoLocation = "r";
     autoTimer.reset();
     autoTimer.start();
     
@@ -145,7 +148,7 @@ public class Robot extends TimedRobot {
         m_Intake.set(1);
       }
 
-      if (m_autonomousCommand == null) {
+      if (m_autonomousCommand == null && autoLocation == "m") {
         m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
         m_autonomousCommand.schedule();
       }
