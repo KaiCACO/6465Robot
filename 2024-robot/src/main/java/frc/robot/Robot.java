@@ -190,6 +190,11 @@ public class Robot extends TimedRobot {
       eightTog = false;
     }
 
+    if(xbox.getRawButton(9)) {
+      gyro.reset();
+      System.out.println("-- RESET ROBOT ROTATION --");
+    }
+
     // Manual controls
     if(!ampTog && !speakerTog){
       xbox.setRumble(RumbleType.kBothRumble, 0);
