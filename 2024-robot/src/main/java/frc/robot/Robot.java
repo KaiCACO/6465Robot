@@ -7,7 +7,6 @@ package frc.robot;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,7 +15,6 @@ import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DigitalInput;
-
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -54,8 +52,6 @@ public class Robot extends TimedRobot {
 
   private int autoSpeak = 0;
   private Timer speakAutoTimer = new Timer();
-
-  private int auto = 0;
   private Timer autoTimer = new Timer();
 
   private boolean toggleLock = false;
@@ -121,7 +117,6 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     autoTimer.reset();
     autoTimer.start();
-    auto = 1;
     
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
