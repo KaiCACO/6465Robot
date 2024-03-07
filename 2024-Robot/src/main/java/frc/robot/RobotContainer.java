@@ -11,6 +11,8 @@ import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 
+import java.util.concurrent.Callable;
+
 import com.revrobotics.CANSparkMax;
 
 /*
@@ -66,8 +68,8 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
 
-   public Command getAutoCommand(CANSparkMax intakeMotor) {
-    return new MoveForwardAndBackCommand(2, 0.2, m_robotDrive, intakeMotor);
+   public Command getAutoCommand(CANSparkMax intakeMotor, CANSparkMax shooterLeft, CANSparkMax shooterRight) {
+    return new MoveForwardAndBackCommand(2, 0.2, m_robotDrive, intakeMotor, shooterLeft, shooterRight);
    }
 }
 

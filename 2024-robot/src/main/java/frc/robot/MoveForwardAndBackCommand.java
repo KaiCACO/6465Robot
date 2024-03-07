@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.util.concurrent.Callable;
+
 import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.wpilibj.Timer;
@@ -18,14 +20,18 @@ public class MoveForwardAndBackCommand extends CommandBase {
   private final double speed;
   private final DriveSubsystem swerve;
   private final CANSparkMax motor;
+  private final CANSparkMax shooterLeft;
+  private final CANSparkMax shooterRight;
   private final Timer commandTimer;
 
-  public MoveForwardAndBackCommand(double distance, double speed, DriveSubsystem swerve, CANSparkMax motor) {
+  public MoveForwardAndBackCommand(double distance, double speed, DriveSubsystem swerve, CANSparkMax motor, CANSparkMax shooterLeft, CANSparkMax shooterRight) {
 
     this.speed = speed;
     this.distance = distance;
     this.swerve = swerve;
     this.motor = motor;
+    this.shooterLeft = shooterLeft;
+    this.shooterRight = shooterRight;
     this.commandTimer = new Timer();
     
     addRequirements(swerve);
@@ -40,16 +46,27 @@ public class MoveForwardAndBackCommand extends CommandBase {
 
   @Override
   public void execute() {
-    motor.set(0.7);
     double ct = commandTimer.get();
+    final double stopMoving = (distance * 2) + 1 + 0.1;
     if (ct < distance) {
       swerve.drive(speed, 0, 0, false, true);
     }
     else if (ct < distance + 1) {
       swerve.drive(0, 0, 0, false, true);
     }
-    else if (ct < (distance * 2) + 1 + 0.1) {
+    else if (ct < stopMoving) {
       swerve.drive(-speed, 0, 0, false, true);
+    }
+    else if (ct < stopMoving + 0.5) {
+      shooterLeft.set(-0.6);
+      shooterRight.set(-0.6);
+      motor.set(-0.3);
+      swerve.drive(0, 0, 0, false, false);
+    }
+    else if (ct < stopMoving + 2) {
+      shooterLeft.set(0);
+      shooterRight.set(0);
+      motor.set(1);
     }
     else {
       end(false);
@@ -59,7 +76,6 @@ public class MoveForwardAndBackCommand extends CommandBase {
   @Override
   public void end(boolean interrupted) {
     motor.set(0);
-    System.out.println(commandTimer.get());
     swerve.drive(0, 0, 0, false, false);
   }
 

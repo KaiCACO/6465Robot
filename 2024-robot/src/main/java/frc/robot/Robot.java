@@ -122,6 +122,11 @@ public class Robot extends TimedRobot {
     autoTimer.reset();
     autoTimer.start();
     auto = 1;
+    
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.cancel();
+    }
+    m_autonomousCommand = null;
 
   }
 
@@ -135,22 +140,20 @@ public class Robot extends TimedRobot {
     }
     else if (t < 3) {
       m_Intake.set(1);
-      m_ShooterLeft.set(0);
-      m_ShooterRight.set(0);
+      if (t > 1.7 && t < 2) {
+        m_ShooterLeft.set(0.2);
+        m_ShooterRight.set(0.2);
+      }
+      else if (t < 4.2) {
+        m_ShooterLeft.set(0);
+        m_ShooterRight.set(0);
+        m_Intake.set(1);
+      }
 
-      if (m_autonomousCommand == null && auto == 1) {
-        m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake);
+      if (m_autonomousCommand == null) {
+        m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
         m_autonomousCommand.schedule();
       }
-      else if (auto == 2) {
-        m_ShooterLeft.set(-0.6);
-        m_ShooterRight.set(-0.6);
-        m_autonomousCommand = null;
-      }
-    }
-    else if (auto == 1 && t < 4.5) {
-      autoTimer.reset();
-      autoTimer.start();
     }
   }
 
@@ -397,3 +400,4 @@ public class Robot extends TimedRobot {
     }
   }
 }
+
