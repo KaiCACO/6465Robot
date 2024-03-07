@@ -23,9 +23,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import com.revrobotics.CANSparkMax;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -79,39 +79,8 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-  public Command backward() {
-    // Create config for trajectory
-    TrajectoryConfig config = new TrajectoryConfig(
-        AutoConstants.kMaxSpeedMetersPerSecond,
-        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(DriveConstants.kDriveKinematics);
 
-    // An example trajectory to follow. All units in meters.
-    Trajectory backTrajectory = TrajectoryGenerator.generateTrajectory(
-        // Start at the origin facing the +X direction
-        new Pose2d(0, 0, new Rotation2d(0)),
-        List.of(),
-        new Pose2d(-3, 0, new Rotation2d(0)),
-        config);
-
-    var thetaController = new ProfiledPIDController(
-        AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    SwerveControllerCommand moveBackwards = new SwerveControllerCommand(
-        backTrajectory,
-        m_robotDrive::getPose, // Functional interface to feed supplier
-        DriveConstants.kDriveKinematics,
-
-        // Position controllers
-        new PIDController(AutoConstants.kPXController, 0, 0),
-        new PIDController(AutoConstants.kPYController, 0, 0),
-        thetaController,
-        m_robotDrive::setModuleStates,
-        m_robotDrive);
-
-    // Run path following command, then stop at the end.
-    return moveBackwards.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false));
-  }
+   public Command getAutoCommand(CANSparkMax intakeMotor) {
+    return new MoveForwardAndBackCommand(.5, 0.4, m_robotDrive, intakeMotor);
+   }
 }

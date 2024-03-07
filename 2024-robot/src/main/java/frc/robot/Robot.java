@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -22,7 +21,6 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -56,6 +54,9 @@ public class Robot extends TimedRobot {
 
   private int autoSpeak = 0;
   private Timer speakAutoTimer = new Timer();
+
+  private int auto = 0;
+  private Timer autoTimer = new Timer();
 
   private boolean toggleLock = false;
   private boolean bTogCon = false;
@@ -118,18 +119,34 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.backward();
-    
+    autoTimer.reset();
+    autoTimer.start();
+    auto = 1;
 
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake);
   }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    double t = autoTimer.get();
+    if (auto == 1 && t < 1.5){
+      m_ShooterLeft.set(-0.6);
+      m_ShooterRight.set(-0.6);
+    }
+    else if (auto == 1 && t < 3) {
+      m_Intake.set(1);
+      m_ShooterLeft.set(0);
+      m_ShooterRight.set(0);
+
+      if (m_autonomousCommand != null) {
+        m_autonomousCommand.schedule();
+      }
+    }
+    else if (auto == 1 && t < 4.5) {
+      m_Intake.set(0);
+    }
+  }
 
   @Override
   public void teleopInit() {
@@ -177,7 +194,6 @@ public class Robot extends TimedRobot {
 
     // Auto functions
     else if (ampTog) {
-      m_robotContainer.EasyDrive(0, 0, 0, false);
       xbox.setRumble(RumbleType.kLeftRumble, 0.3);
       autoSpeak = 0;
 
@@ -200,7 +216,7 @@ public class Robot extends TimedRobot {
 
       if (autoAmp == 1) {
         if (t <= 1) {
-          m_robotContainer.EasyDrive(0.4, 0, 0, true);
+          
         }
         else if (m_ScrewLimitFront.get()) {
           ampAutoTimer.reset();
@@ -210,7 +226,6 @@ public class Robot extends TimedRobot {
       }
 
       else if (autoAmp == 2) {
-        m_robotContainer.EasyDrive(0, 0, 0, false);
         if (t <= 0.2) {
           m_Intake.set(-.5);
         }
@@ -223,7 +238,6 @@ public class Robot extends TimedRobot {
     else if (speakerTog) {
       xbox.setRumble(RumbleType.kRightRumble, 0.3);
       autoAmp = 0;
-      m_robotContainer.EasyDrive(0, 0, 0, true);
 
       if (autoSpeak == 0) {
         speakAutoTimer.reset();
