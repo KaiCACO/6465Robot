@@ -40,8 +40,15 @@ public class MoveForwardAndBackCommand extends CommandBase {
 
   @Override
   public void execute() {
-    if (commandTimer.get() < distance) {
+    var t = commandTimer.get();
+    if (t < distance) {
       swerve.drive(speed, 0, 0, false, false);
+    }
+    else if (t < distance + 1) {
+      swerve.drive(0, 0, 0, false, false)
+    }
+    else if (t < distance * 2 + 0.5) {
+      swerve.drive(-speed, 0, 0, false, false);
     }
     else {
       end(false);

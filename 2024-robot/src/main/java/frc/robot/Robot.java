@@ -123,28 +123,32 @@ public class Robot extends TimedRobot {
     autoTimer.start();
     auto = 1;
 
-    m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake);
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
     double t = autoTimer.get();
-    if (auto == 1 && t < 1.5){
+    if (t < 1.5){
       m_ShooterLeft.set(-0.6);
       m_ShooterRight.set(-0.6);
     }
-    else if (auto == 1 && t < 3) {
+    else if (t < 3) {
       m_Intake.set(1);
       m_ShooterLeft.set(0);
       m_ShooterRight.set(0);
 
-      if (m_autonomousCommand != null) {
+      if (m_autonomousCommand == null && auto == 1) {
+        m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake);
         m_autonomousCommand.schedule();
+      }
+      else if (m_autonomousCommand == 2) {
+        m_autonomousCommand = null;
       }
     }
     else if (auto == 1 && t < 4.5) {
-      m_Intake.set(0);
+      autoTimer.reset();
+      autoTimer.start();
     }
   }
 
