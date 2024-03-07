@@ -22,7 +22,7 @@ public class MoveForwardAndBackCommand extends CommandBase {
 
   public MoveForwardAndBackCommand(double distance, double speed, DriveSubsystem swerve, CANSparkMax motor) {
 
-    this.speed = Constants.AutoConstants.kMaxSpeedMetersPerSecond;
+    this.speed = speed;
     this.distance = distance;
     this.swerve = swerve;
     this.motor = motor;
@@ -40,15 +40,16 @@ public class MoveForwardAndBackCommand extends CommandBase {
 
   @Override
   public void execute() {
-    var t = commandTimer.get();
-    if (t < distance) {
-      swerve.drive(speed, 0, 0, false, false);
+    motor.set(0.7);
+    double ct = commandTimer.get();
+    if (ct < distance) {
+      swerve.drive(speed, 0, 0, false, true);
     }
-    else if (t < distance + 1) {
-      swerve.drive(0, 0, 0, false, false)
+    else if (ct < distance + 1) {
+      swerve.drive(0, 0, 0, false, true);
     }
-    else if (t < distance * 2 + 0.5) {
-      swerve.drive(-speed, 0, 0, false, false);
+    else if (ct < (distance * 2) + 1 + 0.1) {
+      swerve.drive(-speed, 0, 0, false, true);
     }
     else {
       end(false);
@@ -57,7 +58,8 @@ public class MoveForwardAndBackCommand extends CommandBase {
 
   @Override
   public void end(boolean interrupted) {
-    System.out.println(interrupted);
+    motor.set(0);
+    System.out.println(commandTimer.get());
     swerve.drive(0, 0, 0, false, false);
   }
 

@@ -29,7 +29,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
  * project.
  */
 public class Robot extends TimedRobot {
-  private Command m_autonomousCommand;
+  private Command m_autonomousCommand = null;
   private RobotContainer m_robotContainer;
   private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
 
@@ -142,7 +142,9 @@ public class Robot extends TimedRobot {
         m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake);
         m_autonomousCommand.schedule();
       }
-      else if (m_autonomousCommand == 2) {
+      else if (auto == 2) {
+        m_ShooterLeft.set(-0.6);
+        m_ShooterRight.set(-0.6);
         m_autonomousCommand = null;
       }
     }
