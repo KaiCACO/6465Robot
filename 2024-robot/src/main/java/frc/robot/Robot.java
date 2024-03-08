@@ -29,7 +29,8 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand = null;
   private RobotContainer m_robotContainer;
-  private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
+  private final XboxController first_controller = new XboxController(Constants.OIConstants.kDriverControllerPort);
+  private final XboxController second_controller = new XboxController(Constants.OIConstants.kSecondDriverControllerPort);
 
   // Motors/sensors
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.kGyroCanId);
@@ -174,30 +175,30 @@ public class Robot extends TimedRobot {
     // System.out.println(m_LeadScrew.getEncoder().getPosition());
     // System.out.println(ampTog);
 
-    if (xbox.getRawButton(7) && !sevenTog && !speakerTog) {
+    if (second_controller.getRawButton(7) && !sevenTog && !speakerTog) {
       sevenTog = true;
       ampTog = !ampTog;
     }
-    else if (!xbox.getRawButton(7)) {
+    else if (!second_controller.getRawButton(7)) {
       sevenTog = false;
     }
 
-    if (xbox.getRawButton(8) && !eightTog && !ampTog) {
+    if (second_controller.getRawButton(8) && !eightTog && !ampTog) {
       eightTog = true;
       speakerTog = !speakerTog;
     }
-    else if (!xbox.getRawButton(8)) {
+    else if (!second_controller.getRawButton(8)) {
       eightTog = false;
     }
 
-    if(xbox.getRawButton(9)) {
+    if(first_controller.getRawButton(9)) {
       gyro.reset();
       System.out.println("-- RESET ROBOT ROTATION --");
     }
 
     // Manual controls
     if(!ampTog && !speakerTog){
-      xbox.setRumble(RumbleType.kBothRumble, 0);
+      second_controller.setRumble(RumbleType.kBothRumble, 0);
       autoAmp = 0;
       autoSpeak = 0;
       ampAutoTimer.stop();
@@ -206,7 +207,7 @@ public class Robot extends TimedRobot {
 
     // Auto functions
     else if (ampTog) {
-      xbox.setRumble(RumbleType.kLeftRumble, 0.3);
+      second_controller.setRumble(RumbleType.kLeftRumble, 0.3);
       autoSpeak = 0;
 
       if (autoAmp == 0) {
@@ -248,7 +249,7 @@ public class Robot extends TimedRobot {
     }
 
     else if (speakerTog) {
-      xbox.setRumble(RumbleType.kRightRumble, 0.3);
+      second_controller.setRumble(RumbleType.kRightRumble, 0.3);
       autoAmp = 0;
 
       if (autoSpeak == 0) {
@@ -299,13 +300,13 @@ public class Robot extends TimedRobot {
 
   private void manualControls() {
     // Controls the drivetrain
-    m_robotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX(), true);
+    m_robotContainer.EasyDrive(first_controller.getLeftY(), first_controller.getLeftX(), first_controller.getRightX(), true);
 
     // Lead screw control
-    if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
+    if (second_controller.getPOV() == 0 && !m_ScrewLimitFront.get()) {
       m_LeadScrew.set(.5);
     }
-    else if (xbox.getPOV() == 180 && !m_ScrewLimitBack.get()) {
+    else if (second_controller.getPOV() == 180 && !m_ScrewLimitBack.get()) {
       m_LeadScrew.set(-.5);
     }
     else {
@@ -322,7 +323,7 @@ public class Robot extends TimedRobot {
     }
 
     // Intake control
-    if (xbox.getAButton()) {
+    if (first_controller.getAButton()) {
       if (m_LeadScrew.getEncoder().getPosition() > 0.35) {
         m_LeadScrew.set(-0.5);
       }
@@ -330,7 +331,7 @@ public class Robot extends TimedRobot {
         m_Intake.set(0.8);
       }
     }
-    else if (xbox.getYButton()) {
+    else if (first_controller.getYButton()) {
       m_Intake.set(-0.8);
     }
     else {
@@ -338,8 +339,8 @@ public class Robot extends TimedRobot {
     }
 
     // Arm control
-    if (xbox.getLeftBumper()) {
-      if (xbox.getXButton()) {
+    if (second_controller.getLeftBumper()) {
+      if (second_controller.getXButton()) {
         m_ArmLeft.set(-0.5);
       }
       else {
@@ -350,8 +351,8 @@ public class Robot extends TimedRobot {
       m_ArmLeft.set(0);
     }
     
-    if (xbox.getRightBumper()) {
-      if (xbox.getXButton()) {
+    if (second_controller.getRightBumper()) {
+      if (second_controller.getXButton()) {
         m_ArmRight.set(-0.5);
       }
       else {
@@ -374,13 +375,13 @@ public class Robot extends TimedRobot {
 
     // Shooter control
     double shooterDamp = 1.8;
-    if (xbox.getLeftTriggerAxis() > 0.02) {
-      m_ShooterLeft.set(xbox.getLeftTriggerAxis()/shooterDamp);
-      m_ShooterRight.set(xbox.getLeftTriggerAxis()/shooterDamp);
+    if (second_controller.getLeftTriggerAxis() > 0.02) {
+      m_ShooterLeft.set(second_controller.getLeftTriggerAxis()/shooterDamp);
+      m_ShooterRight.set(second_controller.getLeftTriggerAxis()/shooterDamp);
     }
-    else if (xbox.getRightTriggerAxis() > 0.02) {
-      m_ShooterLeft.set(-xbox.getRightTriggerAxis()/shooterDamp);
-      m_ShooterRight.set(-xbox.getRightTriggerAxis()/shooterDamp);
+    else if (second_controller.getRightTriggerAxis() > 0.02) {
+      m_ShooterLeft.set(-second_controller.getRightTriggerAxis()/shooterDamp);
+      m_ShooterRight.set(-second_controller.getRightTriggerAxis()/shooterDamp);
     }
     else {
       m_ShooterLeft.set(0);
@@ -388,18 +389,18 @@ public class Robot extends TimedRobot {
     }
 
     // Toggle breaks
-    if (xbox.getBButton() && !bTogCon) {
+    if (second_controller.getBButton() && !bTogCon) {
       bTogCon = true;
       toggleLock = !toggleLock;
     }
-    else if (!xbox.getBButton()) {
+    else if (!second_controller.getBButton()) {
       bTogCon = false;
     }
-    if (xbox.getBButton() && toggleLock) {
-      xbox.setRumble(RumbleType.kBothRumble, 0.6);
+    if (second_controller.getBButton() && toggleLock) {
+      second_controller.setRumble(RumbleType.kBothRumble, 0.6);
     }
     else {
-      xbox.setRumble(RumbleType.kBothRumble, 0);
+      second_controller.setRumble(RumbleType.kBothRumble, 0);
     }
   }
 }
