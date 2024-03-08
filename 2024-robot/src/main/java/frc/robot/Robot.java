@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -64,6 +66,8 @@ public class Robot extends TimedRobot {
   private boolean eightTog = false;
   private boolean speakerTog = false;
 
+  private SendableChooser<String> m_autoChooser = new SendableChooser<>();
+
   
 
   /**
@@ -82,6 +86,13 @@ public class Robot extends TimedRobot {
     m_LeadScrew.setInverted(true);
     m_ArmLeft.setInverted(true);
     m_ArmRight.setInverted(true);
+
+    m_autoChooser.setDefaultOption("LEFT", "l");
+    m_autoChooser.addOption("MIDDLE", "m");
+    m_autoChooser.addOption("RIGHT", "r");
+    SmartDashboard.clearPersistent("Auto choices");
+    SmartDashboard.putData("Auto choices", m_autoChooser);
+    SmartDashboard.updateValues();
   }
 
   /**
@@ -118,7 +129,9 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    autoLocation = "r";
+    SmartDashboard.updateValues();
+    autoLocation = m_autoChooser.getSelected();
+    System.out.println("SELECTED AUTO: " + autoLocation);
     autoTimer.reset();
     autoTimer.start();
     
@@ -134,22 +147,21 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = autoTimer.get();
     if (t < 1.5){
-      m_ShooterLeft.set(-0.6);
-      m_ShooterRight.set(-0.6);
+      m_ShooterLeft.set(-0.50);
+      m_ShooterRight.set(-0.50);
     }
     else if (t < 3) {
       m_Intake.set(1);
-      if (t > 1.7 && t < 2) {
+      if (t > 1.9 && t < 2.2) {
         m_ShooterLeft.set(0.2);
         m_ShooterRight.set(0.2);
       }
-      else if (t < 4.2) {
+      else if (t < 4.4) {
         m_ShooterLeft.set(0);
         m_ShooterRight.set(0);
         m_Intake.set(1);
       }
-
-      if (m_autonomousCommand == null && autoLocation == "m") {
+      if (t < 1.7 && m_autonomousCommand == null && autoLocation == "m") {
         m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
         m_autonomousCommand.schedule();
       }
