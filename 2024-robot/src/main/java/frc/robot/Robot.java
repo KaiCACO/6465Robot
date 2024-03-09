@@ -37,6 +37,7 @@ public class Robot extends TimedRobot {
   // Motors/sensors
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.kGyroCanId);
   private final DigitalInput m_ScrewLimitBack = new DigitalInput(DriveConstants.kBackScrewLimitChannel);
+  // private final DigitalInput m_BackupScrewLimitBack = new DigitalInput(DriveConstants.kBackupBackScrewLimitChannel);
   private final DigitalInput m_ScrewLimitFront = new DigitalInput(DriveConstants.kFrontScrewLimitChannel);
   private final CANSparkMax m_LeadScrew = new CANSparkMax(DriveConstants.kLeadScrewCanId, MotorType.kBrushless);
   private final CANSparkMax m_Intake = new CANSparkMax(DriveConstants.kIntakeCanId, MotorType.kBrushless);
@@ -134,6 +135,7 @@ public class Robot extends TimedRobot {
     System.out.println("SELECTED AUTO: " + autoLocation);
     autoTimer.reset();
     autoTimer.start();
+    gyro.reset();
     
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
@@ -147,21 +149,21 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = autoTimer.get();
     if (t < 1.5){
-      m_ShooterLeft.set(-0.50);
-      m_ShooterRight.set(-0.50);
+      m_ShooterLeft.set(-0.55);
+      m_ShooterRight.set(-0.55);
     }
-    else if (t < 3) {
+    else if (t < 4) {
       m_Intake.set(1);
-      if (t > 1.9 && t < 2.2) {
+      if (t > 2 && t < 2.5) {
         m_ShooterLeft.set(0.2);
         m_ShooterRight.set(0.2);
       }
-      else if (t < 4.4) {
+      else if (t < 3) {
         m_ShooterLeft.set(0);
         m_ShooterRight.set(0);
         m_Intake.set(1);
       }
-      if (t < 1.7 && m_autonomousCommand == null && autoLocation == "m") {
+      if (t < 3.5 && t > 3 && m_autonomousCommand == null && autoLocation == "m") {
         m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
         m_autonomousCommand.schedule();
       }
@@ -181,7 +183,8 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
 
     // System.out.println("Back screw limit: " + m_ScrewLimitBack.get());
-    // System.out.println("Frpnt screw limit: " + m_ScrewLimitFront.get());
+    // System.out.println("Backup back screw limit: " + m_BackupScrewLimitBack.get());
+    // System.out.println("Front screw limit: " + m_ScrewLimitFront.get());
     // System.out.println("AutoAmp: " + autoAmp);
     // System.out.println("AmpTimer: " + ampAutoTimer.get());
     // System.out.println(m_LeadScrew.getEncoder().getPosition());
@@ -205,7 +208,7 @@ public class Robot extends TimedRobot {
 
     if(first_controller.getRawButton(9)) {
       gyro.reset();
-      System.out.println("-- RESET ROBOT ROTATION --");
+      System.out.println("-- ROBOT ROTATION RESET --");
     }
 
     // Manual controls
@@ -229,8 +232,8 @@ public class Robot extends TimedRobot {
       }
       var t = ampAutoTimer.get();
 
-      m_ShooterLeft.set(-0.17);
-      m_ShooterRight.set(-0.17);
+      m_ShooterLeft.set(-0.18);
+      m_ShooterRight.set(-0.18);
 
       if (!m_ScrewLimitFront.get()) {
         m_LeadScrew.set(0.5);
@@ -308,7 +311,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+    System.out.println("Back:" + m_ScrewLimitBack.get());
+  }
 
   private void manualControls() {
     // Controls the drivetrain

@@ -42,21 +42,21 @@ public class MoveForwardAndBackCommand extends CommandBase {
   @Override
   public void execute() {
     double ct = commandTimer.get();
-    final double stopMoving = (distance * 2) + 1 + 0.1;
+    final double stopMoving = (distance * 2) + 1 + 0.3;
     if (ct < distance) {
-      swerve.drive(speed, 0, 0, false, true);
+      swerve.drive(speed, 0, 0, true, true);
     }
     else if (ct < distance + 1) {
-      swerve.drive(0, 0, 0, false, true);
+      swerve.drive(0, 0, 0, true, true);
     }
     else if (ct < stopMoving) {
-      swerve.drive(-speed, 0, 0, false, true);
+      swerve.drive(-speed, 0, 0, true, true);
     }
     else if (ct < stopMoving + 0.5) {
       shooterLeft.set(-0.6);
       shooterRight.set(-0.6);
       motor.set(-0.3);
-      swerve.drive(0, 0, 0, false, false);
+      swerve.drive(0, 0, 0, true, false);
     }
     else if (ct < stopMoving + 2) {
       shooterLeft.set(0);

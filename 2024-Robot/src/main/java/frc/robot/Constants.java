@@ -76,6 +76,7 @@ public final class Constants {
     public static final int kArmRightBreakPort2 = 14;
 
     public static final int kBackScrewLimitChannel = 0;
+    public static final int kBackupBackScrewLimitChannel = 2;
     public static final int kFrontScrewLimitChannel = 1;
     public static final int kGyroCanId = 42;
     public static final boolean kGyroReversed = true;
