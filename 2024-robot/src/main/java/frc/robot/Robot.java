@@ -149,6 +149,7 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     double t = autoTimer.get();
     if (t < 1.5){
+      m_Intake.set(0);
       m_ShooterLeft.set(-0.55);
       m_ShooterRight.set(-0.55);
     }
