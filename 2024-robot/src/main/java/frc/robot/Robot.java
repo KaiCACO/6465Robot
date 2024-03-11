@@ -93,10 +93,6 @@ public class Robot extends TimedRobot {
   
   @Override
   public void robotPeriodic() {
-    // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
-    // commands, running already-scheduled commands, removing finished or interrupted commands,
-    // and running subsystem periodic() methods.  This must be called from the robot's periodic
-    // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
   }
 
@@ -114,46 +110,19 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledPeriodic() {}
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+
   @Override
   public void autonomousInit() {
-    autoLocation = "r";
-    autoTimer.reset();
-    autoTimer.start();
-    
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
-    }
-    m_autonomousCommand = null;
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
   }
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {
-    double t = autoTimer.get();
-    if (t < 1.5){
-      m_ShooterLeft.set(-0.6);
-      m_ShooterRight.set(-0.6);
-    }
-    else if (t < 3) {
-      m_Intake.set(1);
-      if (t > 1.7 && t < 2) {
-        m_ShooterLeft.set(0.2);
-        m_ShooterRight.set(0.2);
-      }
-      else if (t < 4.2) {
-        m_ShooterLeft.set(0);
-        m_ShooterRight.set(0);
-        m_Intake.set(1);
-      }
-
-      if (m_autonomousCommand == null && autoLocation == "m") {
-        m_autonomousCommand = m_robotContainer.getAutoCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
-        m_autonomousCommand.schedule();
-      }
-    }
-  }
+  public void autonomousPeriodic() {}
 
   @Override
   public void teleopInit() {
@@ -298,9 +267,6 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {}
 
   private void manualControls() {
-    // Controls the drivetrain
-    m_robotContainer.EasyDrive(xbox.getLeftY(), xbox.getLeftX(), xbox.getRightX(), true);
-
     // Lead screw control
     if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
       m_LeadScrew.set(.5);
