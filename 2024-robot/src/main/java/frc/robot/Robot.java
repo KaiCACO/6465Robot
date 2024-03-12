@@ -294,10 +294,10 @@ public class Robot extends TimedRobot {
       }
 
       else if (autoSpeak == 2) {
-        if (t <= 0.2) {
+        if (1 < t && t < 1.2) {
           m_Intake.set(-.5);
         }
-        else {
+        else if (t > 1.2){
           m_Intake.set(1);
         }
       }
