@@ -97,7 +97,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(m_Intake);
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -119,13 +119,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-
-    // System.out.println("Back screw limit: " + m_ScrewLimitBack.get());
-    // System.out.println("Frpnt screw limit: " + m_ScrewLimitFront.get());
-    // System.out.println("AutoAmp: " + autoAmp);
-    // System.out.println("AmpTimer: " + ampAutoTimer.get());
-    // System.out.println(m_LeadScrew.getEncoder().getPosition());
-    // System.out.println(ampTog);
 
     if (xbox.getRawButton(7) && !sevenTog && !speakerTog) {
       sevenTog = true;
