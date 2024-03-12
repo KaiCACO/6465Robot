@@ -20,6 +20,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
@@ -92,14 +93,9 @@ public class RobotContainer {
 
     // An example trajectory to follow. All units in meters.
     Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(0, 0, new Rotation2d(0)),
-        List.of(),
-        new Pose2d(1, 0, new Rotation2d(0)),
-        config);
-    Trajectory returnTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(1, 0, new Rotation2d(0)),
-        List.of(),
-        new Pose2d(0, 0, new Rotation2d(0)),
+        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+        List.of(new Translation2d(1, 0), new Translation2d(0, 0.01)),
+        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
         config);
 
     var thetaController = new ProfiledPIDController(
@@ -108,39 +104,29 @@ public class RobotContainer {
 
     // Swerve controller commands for each trajectory
     SwerveControllerCommand forwardCommand = new SwerveControllerCommand(
-            forwardTrajectory,
-            m_robotDrive::getPose,
-            DriveConstants.kDriveKinematics,
-            new PIDController(AutoConstants.kPXController, 0, 0),
-            new PIDController(AutoConstants.kPYController, 0, 0),
-            thetaController,
-            m_robotDrive::setModuleStates,
-            m_robotDrive);
-    SwerveControllerCommand returnCommand = new SwerveControllerCommand(
-            returnTrajectory,
-            m_robotDrive::getPose,
-            DriveConstants.kDriveKinematics,
-            new PIDController(AutoConstants.kPXController, 0, 0),
-            new PIDController(AutoConstants.kPYController, 0, 0),
-            thetaController,
-            m_robotDrive::setModuleStates,
-            m_robotDrive);
+        forwardTrajectory,
+        m_robotDrive::getPose,
+        DriveConstants.kDriveKinematics,
+        new PIDController(AutoConstants.kPXController, 0, 0),
+        new PIDController(AutoConstants.kPYController, 0, 0),
+        thetaController,
+        m_robotDrive::setModuleStates,
+        m_robotDrive);
 
-            // Reset odometry to the starting pose
-            m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
-        
-            // Sequence the commands with motor activation
-            return new SequentialCommandGroup(
-                forwardCommand
-                .andThen(
-                    () -> m_intake.set(1)
-                )
-                .andThen(
-                    returnCommand
-                )
-                .andThen(
-                    () -> m_intake.set(0)
-                )
-            );
-        }
+    Command debug = Commands.run(()->{
+        System.out.println("Finished moving");
+    });
+
+    Command intake = Commands.run(()->{
+        m_intake.set(0.5);
+    });
+
+    // Reset odometry to the starting pose
+    m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
+
+    // Sequence the commands with motor activation
+    return new SequentialCommandGroup(
+        forwardCommand, debug, intake
+    );
+}
 }
