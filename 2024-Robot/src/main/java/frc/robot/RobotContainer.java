@@ -113,20 +113,18 @@ public class RobotContainer {
         m_robotDrive::setModuleStates,
         m_robotDrive);
 
-    Command debug = Commands.run(()->{
-        System.out.println("Finished moving");
-    });
-
-    Command intake = Commands.run(()->{
-        m_intake.set(0.5);
-    });
+    Command intake = Commands.startEnd(
+        () -> {m_intake.set(0.5);}, 
+        () -> {m_intake.set(0);}
+    );
 
     // Reset odometry to the starting pose
     m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
     // Sequence the commands with motor activation
     return new SequentialCommandGroup(
-        forwardCommand, debug, intake
+        forwardCommand
+        .alongWith(intake.withTimeout(5))
     );
 }
 }
