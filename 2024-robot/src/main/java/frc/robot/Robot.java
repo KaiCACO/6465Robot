@@ -141,18 +141,30 @@ public class Robot extends TimedRobot {
       System.out.println("-- RESET ROBOT ROTATION --");
     }
 
-    // Manual controls
+    if (xbox.getRawButton(7) && !sevenTog && !speakerTog) {
+      sevenTog = true;
+      ampTog = !ampTog;
+    }
+    else if (!xbox.getRawButton(7)) {
+      sevenTog = false;
+    }
+
+    if (xbox.getRawButton(8) && !eightTog && !ampTog) {
+      eightTog = true;
+      speakerTog = !speakerTog;
+    }
+    else if (!xbox.getRawButton(8)) {
+      eightTog = false;
+    }
+
+    if(xbox.getRawButton(9)) {
+      gyro.reset();
+      System.out.println("-- ROBOT ROTATION RESET --");
+    }
+
     if(!ampTog && !speakerTog){
       xbox.setRumble(RumbleType.kBothRumble, 0);
-    }
-
-    // Auto functions
-    else if (ampTog) {
-      xbox.setRumble(RumbleType.kLeftRumble, 0.3);
-    }
-
-    else if (speakerTog) {
-      xbox.setRumble(RumbleType.kRightRumble, 0.3);
+      manualControls();
     }
   }
 
@@ -239,8 +251,9 @@ public class Robot extends TimedRobot {
     }
 
     // Shooter control
-    double shooterDamp = 1.8;
+    double shooterDamp = 1;
     if (xbox.getLeftTriggerAxis() > 0.02) {
+      System.out.println("oujrujsghsruoi");
       m_ShooterLeft.set(xbox.getLeftTriggerAxis()/shooterDamp);
       m_ShooterRight.set(xbox.getLeftTriggerAxis()/shooterDamp);
     }
