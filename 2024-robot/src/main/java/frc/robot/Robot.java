@@ -164,7 +164,22 @@ public class Robot extends TimedRobot {
 
     if(!ampTog && !speakerTog){
       xbox.setRumble(RumbleType.kBothRumble, 0);
+      m_autonomousCommand = null;
       manualControls();
+    }
+
+    else if (ampTog) {
+      xbox.setRumble(RumbleType.kLeftRumble, 0.2);
+      // m_autonomousCommand = m_robotContainer.getAmpCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
+    }
+
+    else if (speakerTog) {
+      xbox.setRumble(RumbleType.kLeftRumble, 0.2);
+      // m_autonomousCommand = m_robotContainer.getSpeakerCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
+    }
+
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
     }
   }
 
@@ -179,6 +194,8 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {}
 
   private void manualControls() {
+
+
     // Lead screw control
     if (xbox.getPOV() == 0 && !m_ScrewLimitFront.get()) {
       m_LeadScrew.set(.5);

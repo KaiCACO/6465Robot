@@ -83,48 +83,55 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-  public Command getAutonomousCommand(CANSparkMax m_intake) {
-    // Create config for trajectory
-    TrajectoryConfig config = new TrajectoryConfig(
-        AutoConstants.kMaxSpeedMetersPerSecond,
-        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(DriveConstants.kDriveKinematics);
+    public Command getAutonomousCommand(CANSparkMax m_intake) {
+        // Create config for trajectory
+        TrajectoryConfig config = new TrajectoryConfig(
+            AutoConstants.kMaxSpeedMetersPerSecond,
+            AutoConstants.kMaxAccelerationMetersPerSecondSquared)
+            // Add kinematics to ensure max speed is actually obeyed
+            .setKinematics(DriveConstants.kDriveKinematics);
 
-    // An example trajectory to follow. All units in meters.
-    Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-        List.of(new Translation2d(1, 0), new Translation2d(0, 0.01)),
-        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-        config);
+        // An example trajectory to follow. All units in meters.
+        Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
+            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            List.of(new Translation2d(1, 0), new Translation2d(0, 0.01)),
+            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            config);
 
-    var thetaController = new ProfiledPIDController(
-        AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+        var thetaController = new ProfiledPIDController(
+            AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
+        thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // Swerve controller commands for each trajectory
-    SwerveControllerCommand forwardCommand = new SwerveControllerCommand(
-        forwardTrajectory,
-        m_robotDrive::getPose,
-        DriveConstants.kDriveKinematics,
-        new PIDController(AutoConstants.kPXController, 0, 0),
-        new PIDController(AutoConstants.kPYController, 0, 0),
-        thetaController,
-        m_robotDrive::setModuleStates,
-        m_robotDrive);
+        // Swerve controller commands for each trajectory
+        SwerveControllerCommand forwardCommand = new SwerveControllerCommand(
+            forwardTrajectory,
+            m_robotDrive::getPose,
+            DriveConstants.kDriveKinematics,
+            new PIDController(AutoConstants.kPXController, 0, 0),
+            new PIDController(AutoConstants.kPYController, 0, 0),
+            thetaController,
+            m_robotDrive::setModuleStates,
+            m_robotDrive);
 
-    Command intake = Commands.startEnd(
-        () -> {m_intake.set(0.5);}, 
-        () -> {m_intake.set(0);}
-    );
+        Command intake = Commands.startEnd(
+            () -> {m_intake.set(0.5);}, 
+            () -> {m_intake.set(0);}
+        );
 
-    // Reset odometry to the starting pose
-    m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
+        // Reset odometry to the starting pose
+        m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
-    // Sequence the commands with motor activation
-    return new SequentialCommandGroup(
-        forwardCommand
-        .alongWith(intake.withTimeout(5))
-    );
-}
+        // Sequence the commands with motor activation
+        return new SequentialCommandGroup(
+            forwardCommand
+            .withTimeout(4)
+            .alongWith(intake.withTimeout(2))
+        );
+    }
+
+    public Command getAmpCommand(CANSparkMax m_intake, CANSparkMax m_shooter_left, CANSparkMax m_shooter_right) {
+        return new Command() {
+            
+        };
+    }
 }
