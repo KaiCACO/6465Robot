@@ -97,11 +97,18 @@ public class RobotContainer {
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
-        Trajectory forwardRightTrajectory = TrajectoryGenerator.generateTrajectory(
+        Trajectory forwardLeftTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             List.of(new Translation2d(1, 0.5), new Translation2d(0, -0.01)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
+
+        Trajectory forwardRightTrajectory = TrajectoryGenerator.generateTrajectory(
+            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            List.of(new Translation2d(1, -0.5), new Translation2d(0, -0.01)),
+            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            config);
+
 
         var thetaController = new ProfiledPIDController(
             AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
@@ -110,6 +117,17 @@ public class RobotContainer {
         // Swerve controller commands for each trajectory
         SwerveControllerCommand forwardCommand = new SwerveControllerCommand(
             forwardTrajectory,
+            m_robotDrive::getPose,
+            DriveConstants.kDriveKinematics,
+            new PIDController(AutoConstants.kPXController, 0, 0),
+            new PIDController(AutoConstants.kPYController, 0, 0),
+            thetaController,
+            m_robotDrive::setModuleStates,
+            m_robotDrive);
+
+        // Swerve controller commands for each trajectory
+        SwerveControllerCommand forwardLeftCommand = new SwerveControllerCommand(
+            forwardLeftTrajectory,
             m_robotDrive::getPose,
             DriveConstants.kDriveKinematics,
             new PIDController(AutoConstants.kPXController, 0, 0),
@@ -140,9 +158,16 @@ public class RobotContainer {
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
             forwardCommand
-            .alongWith(intake.withTimeout(4)),
+            .withTimeout(4),
+            //.alongWith(intake.withTimeout(4)),
+
+            forwardLeftCommand
+            .withTimeout(4),
+            //.alongWith(intake.withTimeout(4)),
+
             forwardRightCommand
             .withTimeout(4)
+            //.alongWith(intake.withTimeout(4))
         );
     }
     
