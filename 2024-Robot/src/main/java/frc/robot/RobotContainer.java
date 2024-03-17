@@ -83,7 +83,7 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-    public Command getAutonomousCommand(CANSparkMax m_intake) {
+    public Command getAutonomousCommand(CANSparkMax m_intake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -93,19 +93,19 @@ public class RobotContainer {
 
         Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(1, 0), new Translation2d(0, 0.01)),
+            List.of(new Translation2d(1.5, 0), new Translation2d(0, 0.01)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardLeftTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(1, 0.5), new Translation2d(0, -0.01)),
+            List.of(new Translation2d(0.5, 0.75), new Translation2d(1.5, 0.75)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardRightTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(1, -0.5), new Translation2d(0, -0.01)),
+            List.of(new Translation2d(0.5, -0.75), new Translation2d(1.5, -0.75)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
@@ -151,23 +151,52 @@ public class RobotContainer {
             () -> {m_intake.set(0.5);}, 
             () -> {m_intake.set(0);}
         );
+        
+        Command shoot = Commands.sequence(
+            Commands.startEnd(
+                () -> {m_intake.set(-0.5);}, 
+                () -> {m_intake.set(0);}
+            )
+            .withTimeout(0.5)
+            .alongWith(
+                Commands.startEnd(
+                    () -> {m_ShooterLeft.set(1); m_ShooterRight.set(1);}, 
+                    () -> {m_ShooterLeft.set(0); m_ShooterRight.set(0);}
+                )
+                .withTimeout(4)
+            ),
+
+            Commands.startEnd(
+                () -> {m_intake.set(0.5);}, 
+                () -> {m_intake.set(0);}
+            )
+            .withTimeout(0.8)
+        );
 
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
+            shoot,
+
             forwardCommand
-            .withTimeout(4),
-            //.alongWith(intake.withTimeout(4)),
+            .withTimeout(4)
+            .alongWith(intake.withTimeout(4)),
+
+            shoot,
 
             forwardLeftCommand
-            .withTimeout(4),
-            //.alongWith(intake.withTimeout(4)),
+            .withTimeout(4)
+            .alongWith(intake.withTimeout(4)),
+
+            shoot,
 
             forwardRightCommand
             .withTimeout(4)
-            //.alongWith(intake.withTimeout(4))
+            .alongWith(intake.withTimeout(4)),
+
+            shoot
         );
     }
     
