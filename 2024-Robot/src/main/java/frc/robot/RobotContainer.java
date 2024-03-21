@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.PS4Controller.Button;
 import frc.robot.Constants.AutoConstants;
@@ -83,7 +84,16 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-    public Command getAutonomousCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+    public Command getLeftAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        Command shoot = new Shoot();
+        return shoot.withTimeout(4);
+    }
+    public Command getRightAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        Command shoot = new Shoot();
+        return shoot.withTimeout(4);
+    }
+
+    public Command getMiddleAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -148,30 +158,11 @@ public class RobotContainer {
             m_robotDrive);
 
         Command intake = Commands.startEnd(
-            () -> {m_intake.set(0.5); m_SecondIntake.set(0.5);}, 
-            () -> {m_intake.set(0); m_SecondIntake.set(0);}
+            () -> m_intake.set(0.8),
+            () -> m_intake.set(0)
         );
-        
-        Command shoot = Commands.sequence(
-            Commands.startEnd(
-                () -> {m_intake.set(-0.5);}, 
-                () -> {m_intake.set(0);}
-            )
-            .withTimeout(0.5)
-            .alongWith(
-                Commands.startEnd(
-                    () -> {m_ShooterLeft.set(1); m_ShooterRight.set(1);}, 
-                    () -> {m_ShooterLeft.set(0); m_ShooterRight.set(0);}
-                )
-                .withTimeout(4)
-            ),
 
-            Commands.startEnd(
-                () -> {m_intake.set(0.5); m_SecondIntake.set(0.5);}, 
-                () -> {m_intake.set(0); m_SecondIntake.set(0);}
-            )
-            .withTimeout(0.8)
-        );
+        Command shoot = new Shoot();
 
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
@@ -180,24 +171,81 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             shoot,
 
-            forwardCommand,
-            // .withTimeout(4)
-            // .alongWith(intake.withTimeout(4)),
+            forwardCommand
+            .withTimeout(4)
+            .alongWith(intake),
 
-            //shoot,
+            shoot,
 
-            forwardLeftCommand,
-            // .withTimeout(4)
-            // .alongWith(intake.withTimeout(4)),
+            forwardLeftCommand
+            .withTimeout(4)
+            .alongWith(intake.withTimeout(4)),
 
-            //shoot,
+            shoot,
 
             forwardRightCommand
-            // .withTimeout(4)
-            // .alongWith(intake.withTimeout(4)),
+            .withTimeout(4)
+            .alongWith(intake.withTimeout(4)),
 
-            //shoot
+            shoot
         );
+    }
+    
+    public class Shoot extends Command {
+        private final CANSparkMax m_shootLeft = new CANSparkMax(Constants.DriveConstants.kShooterLeftCanId, CANSparkMax.MotorType.kBrushless);
+        private final CANSparkMax m_shootRight = new CANSparkMax(Constants.DriveConstants.kShooterRightCanId, CANSparkMax.MotorType.kBrushless);
+        private final CANSparkMax m_Intake = new CANSparkMax(Constants.DriveConstants.kIntakeCanId, CANSparkMax.MotorType.kBrushless);
+        private final CANSparkMax m_SecondIntake = new CANSparkMax(Constants.DriveConstants.kSecondIntakeCanId, CANSparkMax.MotorType.kBrushless);
+        
+        
+        private final Timer m_timer = new Timer();
+
+        public Shoot() {}
+    
+        // Called just before this Command runs the first time
+        public void initialize() {
+            m_shootLeft.set(0.8);
+            m_shootRight.set(0.8);
+            m_timer.reset();
+            m_timer.start();
+        }
+
+        // Called repeatedly when this Command is scheduled to run
+        public void execute() {
+            if (!m_timer.hasElapsed(0.3)) {
+                m_Intake.set(-0.5);
+                m_SecondIntake.set(-0.5);
+            }
+            else if (!m_timer.hasElapsed(1.5)) {
+                m_Intake.set(0);
+                m_SecondIntake.set(0);
+                m_shootLeft.set(0.8);
+                m_shootRight.set(0.8);
+            }
+            else {
+                m_Intake.set(1);
+                m_SecondIntake.set(1);
+            }
+        }
+    
+        // Make this return true when this Command no longer needs to run execute()
+        public boolean isFinished() {
+            return m_timer.get() > 2.5;
+        }
+    
+        // Called once after isFinished returns true
+        public void end() {
+            m_Intake.set(0);
+            m_SecondIntake.set(0);
+            m_shootLeft.set(0);
+            m_shootRight.set(0);
+        }
+    
+        // Called when another command which requires one or more of the same
+        // subsystems is scheduled to run
+        public void interrupted() {
+           end();
+        }
     }
     
 }

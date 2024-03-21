@@ -8,7 +8,6 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
@@ -19,6 +18,8 @@ import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -27,9 +28,13 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
  * project.
  */
 public class Robot extends TimedRobot {
+  
   private Command m_autonomousCommand = null;
   private RobotContainer m_robotContainer;
   private final XboxController xbox = new XboxController(Constants.OIConstants.kDriverControllerPort);
+
+  private String m_autoSelected = "m";
+  private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
   // Motors/sensors
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.kGyroCanId);
@@ -73,6 +78,11 @@ public class Robot extends TimedRobot {
     m_LeadScrew.setInverted(false);
     m_ArmLeft.setInverted(true);
     m_ArmRight.setInverted(true);
+
+    m_chooser.setDefaultOption("m", "m");
+    m_chooser.addOption("l", "l");
+    m_chooser.addOption("r", "r");
+    SmartDashboard.putData("Auto choices", m_chooser);
   }
 
   /**
@@ -98,7 +108,17 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    m_autoSelected = m_chooser.getSelected();
+
+    if (m_autoSelected.equals("m")) {
+      m_autonomousCommand = m_robotContainer.getMiddleAutoCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    }
+    else if (m_autoSelected.equals("l")) {
+      m_autonomousCommand = m_robotContainer.getLeftAutoCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    }
+    else if (m_autoSelected.equals("r")) {
+      m_autonomousCommand = m_robotContainer.getRightAutoCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    }
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
