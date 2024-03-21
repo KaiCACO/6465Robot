@@ -79,9 +79,9 @@ public class Robot extends TimedRobot {
     m_ArmLeft.setInverted(true);
     m_ArmRight.setInverted(true);
 
-    m_chooser.setDefaultOption("m", "m");
-    m_chooser.addOption("l", "l");
-    m_chooser.addOption("r", "r");
+    m_chooser.setDefaultOption("middle", "m");
+    m_chooser.addOption("left", "l");
+    m_chooser.addOption("right", "r");
     SmartDashboard.putData("Auto choices", m_chooser);
   }
 

@@ -47,8 +47,6 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
-    // Configure the button bindings
-    configureButtonBindings();
 
     // Configure default commands
     m_robotDrive.setDefaultCommand(
@@ -63,21 +61,6 @@ public class RobotContainer {
             m_robotDrive));
   }
 
-  /**
-   * Use this method to define your button->command mappings. Buttons can be
-   * created by
-   * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its
-   * subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling
-   * passing it to a
-   * {@link JoystickButton}.
-   */
-  private void configureButtonBindings() {
-    new JoystickButton(m_driverController, Button.kR1.value)
-        .whileTrue(new RunCommand(
-            () -> m_robotDrive.setX(),
-            m_robotDrive));
-  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -85,11 +68,11 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
     public Command getLeftAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shoot = new Shoot();
+        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_intake, m_SecondIntake);
         return shoot.withTimeout(4);
     }
     public Command getRightAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shoot = new Shoot();
+        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_intake, m_SecondIntake);
         return shoot.withTimeout(4);
     }
 
@@ -103,19 +86,19 @@ public class RobotContainer {
 
         Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(1.5, 0), new Translation2d(0, 0.01)),
+            List.of(new Translation2d(1.5, 0)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardLeftTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(0.5, 0.75), new Translation2d(1.5, 0.75)),
+            List.of(new Translation2d(0.5, 1.0), new Translation2d(1.5, 1.0)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardRightTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(0.5, -0.75), new Translation2d(1.5, -0.75)),
+            List.of(new Translation2d(0.5, -1.0), new Translation2d(1.5, -1.0)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
@@ -157,13 +140,20 @@ public class RobotContainer {
             m_robotDrive::setModuleStates,
             m_robotDrive);
 
-        Command intake = Commands.startEnd(
-            () -> m_intake.set(0.8),
-            () -> m_intake.set(0)
+        Command shoot = Commands.startEnd(
+            () -> {
+                
+            },
+            () -> {
+
+            }
         );
 
-        Command shoot = new Shoot();
-
+        Command intake = Commands.startEnd(
+            () -> {m_intake.set(0.8);},
+            () -> {m_intake.set(0);}
+        )
+        .withTimeout(4);
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
@@ -173,58 +163,63 @@ public class RobotContainer {
 
             forwardCommand
             .withTimeout(4)
-            .alongWith(intake),
+            .alongWith(intake)
 
-            shoot,
+            // shoot,
 
-            forwardLeftCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4)),
+            // forwardLeftCommand
+            // .withTimeout(4),
+            // //.alongWith(intake.withTimeout(4)),
 
-            shoot,
+            // shoot,
 
-            forwardRightCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4)),
+            // forwardRightCommand
+            // .withTimeout(4),
+            // //.alongWith(intake.withTimeout(4)),
 
-            shoot
+            // shoot
         );
     }
     
     public class Shoot extends Command {
-        private final CANSparkMax m_shootLeft = new CANSparkMax(Constants.DriveConstants.kShooterLeftCanId, CANSparkMax.MotorType.kBrushless);
-        private final CANSparkMax m_shootRight = new CANSparkMax(Constants.DriveConstants.kShooterRightCanId, CANSparkMax.MotorType.kBrushless);
-        private final CANSparkMax m_Intake = new CANSparkMax(Constants.DriveConstants.kIntakeCanId, CANSparkMax.MotorType.kBrushless);
-        private final CANSparkMax m_SecondIntake = new CANSparkMax(Constants.DriveConstants.kSecondIntakeCanId, CANSparkMax.MotorType.kBrushless);
-        
-        
         private final Timer m_timer = new Timer();
 
-        public Shoot() {}
+        private CANSparkMax m_shooterLeft;
+        private CANSparkMax m_shooterRight;
+        private CANSparkMax m_intake;
+        private CANSparkMax m_secondIntake;
+
+        public Shoot(CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight, CANSparkMax m_Intake, CANSparkMax m_SecondIntake) {
+            this.m_shooterLeft = m_ShooterLeft;
+            this.m_shooterRight = m_ShooterRight;
+            this.m_intake = m_Intake;
+            this.m_secondIntake = m_SecondIntake;
+        }
     
         // Called just before this Command runs the first time
         public void initialize() {
-            m_shootLeft.set(0.8);
-            m_shootRight.set(0.8);
+            this.m_shooterLeft.set(0.6);
+            this.m_shooterRight.set(0.6);
             m_timer.reset();
             m_timer.start();
         }
 
         // Called repeatedly when this Command is scheduled to run
         public void execute() {
+            System.out.println(m_timer.get());
             if (!m_timer.hasElapsed(0.3)) {
-                m_Intake.set(-0.5);
-                m_SecondIntake.set(-0.5);
+                this.m_intake.set(-0.5);
+                this.m_secondIntake.set(-0.5);
             }
             else if (!m_timer.hasElapsed(1.5)) {
-                m_Intake.set(0);
-                m_SecondIntake.set(0);
-                m_shootLeft.set(0.8);
-                m_shootRight.set(0.8);
+                this.m_intake.set(0);
+                this.m_secondIntake.set(0);
+                this.m_shooterLeft.set(0.6);
+                this.m_shooterRight.set(0.6);
             }
             else {
-                m_Intake.set(1);
-                m_SecondIntake.set(1);
+                this.m_intake.set(1);
+                this.m_secondIntake.set(1);
             }
         }
     
@@ -235,10 +230,10 @@ public class RobotContainer {
     
         // Called once after isFinished returns true
         public void end() {
-            m_Intake.set(0);
-            m_SecondIntake.set(0);
-            m_shootLeft.set(0);
-            m_shootRight.set(0);
+            this.m_intake.set(0);
+            this.m_secondIntake.set(0);
+            this.m_shooterLeft.set(0);
+            this.m_shooterRight.set(0);
         }
     
         // Called when another command which requires one or more of the same
