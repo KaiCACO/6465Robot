@@ -83,7 +83,7 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-    public Command getAutonomousCommand(CANSparkMax m_intake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+    public Command getAutonomousCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -148,8 +148,8 @@ public class RobotContainer {
             m_robotDrive);
 
         Command intake = Commands.startEnd(
-            () -> {m_intake.set(0.5);}, 
-            () -> {m_intake.set(0);}
+            () -> {m_intake.set(0.5); m_SecondIntake.set(0.5);}, 
+            () -> {m_intake.set(0); m_SecondIntake.set(0);}
         );
         
         Command shoot = Commands.sequence(
@@ -167,8 +167,8 @@ public class RobotContainer {
             ),
 
             Commands.startEnd(
-                () -> {m_intake.set(0.5);}, 
-                () -> {m_intake.set(0);}
+                () -> {m_intake.set(0.5); m_SecondIntake.set(0.5);}, 
+                () -> {m_intake.set(0); m_SecondIntake.set(0);}
             )
             .withTimeout(0.8)
         );
@@ -180,23 +180,23 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             shoot,
 
-            forwardCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4)),
+            forwardCommand,
+            // .withTimeout(4)
+            // .alongWith(intake.withTimeout(4)),
 
-            shoot,
+            //shoot,
 
-            forwardLeftCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4)),
+            forwardLeftCommand,
+            // .withTimeout(4)
+            // .alongWith(intake.withTimeout(4)),
 
-            shoot,
+            //shoot,
 
             forwardRightCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4)),
+            // .withTimeout(4)
+            // .alongWith(intake.withTimeout(4)),
 
-            shoot
+            //shoot
         );
     }
     

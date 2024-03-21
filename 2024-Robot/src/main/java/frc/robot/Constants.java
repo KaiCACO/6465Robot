@@ -64,6 +64,7 @@ public final class Constants {
 
     public static final int kLeadScrewCanId = 9;
     public static final int kIntakeCanId = 10;
+    public static final int kSecondIntakeCanId = 15;
     public static final int kArmLeftCanId = 11;
     public static final int kArmRightCanId = 12;
     public static final int kShooterLeftCanId = 13;
@@ -75,8 +76,8 @@ public final class Constants {
     public static final int kArmRightBreakPort = 15;
     public static final int kArmRightBreakPort2 = 14;
 
-    public static final int kBackScrewLimitChannel = 0;
-    public static final int kFrontScrewLimitChannel = 1;
+    public static final int kBackScrewLimitChannel = 8;
+    public static final int kFrontScrewLimitChannel = 9;
     public static final int kGyroCanId = 42;
     public static final boolean kGyroReversed = true;
   }

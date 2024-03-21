@@ -37,6 +37,7 @@ public class Robot extends TimedRobot {
   private final DigitalInput m_ScrewLimitFront = new DigitalInput(DriveConstants.kFrontScrewLimitChannel);
   private final CANSparkMax m_LeadScrew = new CANSparkMax(DriveConstants.kLeadScrewCanId, MotorType.kBrushless);
   private final CANSparkMax m_Intake = new CANSparkMax(DriveConstants.kIntakeCanId, MotorType.kBrushless);
+  private final CANSparkMax m_SecondIntake = new CANSparkMax(DriveConstants.kSecondIntakeCanId, MotorType.kBrushless);
   private final CANSparkMax m_ArmLeft = new CANSparkMax(DriveConstants.kArmLeftCanId, MotorType.kBrushless);
   private final CANSparkMax m_ArmRight = new CANSparkMax(DriveConstants.kArmRightCanId, MotorType.kBrushless);
   private final CANSparkMax m_ShooterLeft = new CANSparkMax(DriveConstants.kShooterLeftCanId, MotorType.kBrushless);
@@ -69,7 +70,7 @@ public class Robot extends TimedRobot {
     m_ShooterLeft.setInverted(true);
     m_ShooterRight.setInverted(true);
     m_Intake.setInverted(true);
-    m_LeadScrew.setInverted(true);
+    m_LeadScrew.setInverted(false);
     m_ArmLeft.setInverted(true);
     m_ArmRight.setInverted(true);
   }
@@ -97,7 +98,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
 
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -157,11 +158,6 @@ public class Robot extends TimedRobot {
       eightTog = false;
     }
 
-    if(xbox.getRawButton(9)) {
-      gyro.reset();
-      System.out.println("-- ROBOT ROTATION RESET --");
-    }
-
     if(!ampTog && !speakerTog){
       xbox.setRumble(RumbleType.kBothRumble, 0);
       m_autonomousCommand = null;
@@ -170,12 +166,12 @@ public class Robot extends TimedRobot {
 
     else if (ampTog) {
       xbox.setRumble(RumbleType.kLeftRumble, 0.2);
-      // m_autonomousCommand = m_robotContainer.getAmpCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
+      // m_autonomousCommand = m_robotContainer.getAmpCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
     }
 
     else if (speakerTog) {
       xbox.setRumble(RumbleType.kLeftRumble, 0.2);
-      // m_autonomousCommand = m_robotContainer.getSpeakerCommand(m_Intake, m_ShooterLeft, m_ShooterRight);
+      // m_autonomousCommand = m_robotContainer.getSpeakerCommand(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
     }
 
     if (m_autonomousCommand != null) {
@@ -223,13 +219,16 @@ public class Robot extends TimedRobot {
       }
       else {
         m_Intake.set(0.8);
+        m_SecondIntake.set(0.8);
       }
     }
     else if (xbox.getYButton()) {
       m_Intake.set(-0.8);
+      m_SecondIntake.set(-0.8);
     }
     else {
       m_Intake.set(0);
+      m_SecondIntake.set(0);
     }
 
     // Arm control
@@ -270,7 +269,6 @@ public class Robot extends TimedRobot {
     // Shooter control
     double shooterDamp = 1;
     if (xbox.getLeftTriggerAxis() > 0.02) {
-      System.out.println("oujrujsghsruoi");
       m_ShooterLeft.set(xbox.getLeftTriggerAxis()/shooterDamp);
       m_ShooterRight.set(xbox.getLeftTriggerAxis()/shooterDamp);
     }
