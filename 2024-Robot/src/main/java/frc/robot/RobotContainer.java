@@ -140,44 +140,42 @@ public class RobotContainer {
             m_robotDrive::setModuleStates,
             m_robotDrive);
 
-        Command shoot = Commands.startEnd(
+        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_Intake, m_SecondIntake);
+        Command intake = new RunCommand(
             () -> {
-                
+                m_intake.set(0.8);
+                m_secondIntake.set(0.8);
             },
             () -> {
-
-            }
-        );
-
-        Command intake = Commands.startEnd(
-            () -> {m_intake.set(0.8);},
-            () -> {m_intake.set(0);}
-        )
-        .withTimeout(4);
+                m_intake.set(0);
+                m_secondIntake.set(0);
+            })
+            .withTimeout(4);
+        
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
-            shoot,
+            shoot.withTimeout(4),
 
             forwardCommand
             .withTimeout(4)
-            .alongWith(intake)
+            .alongWith(intake),
 
-            // shoot,
+            shoot.withTimeout(4),
 
-            // forwardLeftCommand
-            // .withTimeout(4),
-            // //.alongWith(intake.withTimeout(4)),
+            forwardLeftCommand
+            .withTimeout(4),
+            .alongWith(intake),
 
-            // shoot,
+            shoot.withTimeout(4),
 
-            // forwardRightCommand
-            // .withTimeout(4),
-            // //.alongWith(intake.withTimeout(4)),
+            forwardRightCommand
+            .withTimeout(4),
+            .alongWith(intake),
 
-            // shoot
+            shoot.withTimeout(4)
         );
     }
     
