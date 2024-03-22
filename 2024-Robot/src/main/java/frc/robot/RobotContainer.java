@@ -161,19 +161,19 @@ public class RobotContainer {
             .withTimeout(4)
             .alongWith(intake.withTimeout(4))//,
 
-            // shoot.withTimeout(2),
+            // shootCommand.withTimeout(2.6),
 
             // forwardLeftCommand
             // .withTimeout(4)
             // .alongWith(intake.withTimeout(4)),
 
-            // shoot.withTimeout(2),    
+            // shootCommand.withTimeout(2.6),  
 
             // forwardRightCommand
             // .withTimeout(4)
             // .alongWith(intake.withTimeout(4)),
 
-            // shoot.withTimeout(2)
+            // shootCommand.withTimeout(2.6)
         );
     }
     
