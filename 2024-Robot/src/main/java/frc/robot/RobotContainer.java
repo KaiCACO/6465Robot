@@ -176,7 +176,7 @@ public class RobotContainer {
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start(); m_Intake.setInverted(false); m_ShooterLeft.setInverted(false); m_ShooterRight.setInverted(true);})
             .andThen(
                 shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
@@ -184,10 +184,8 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     m_Intake.set(1);
                     m_SecondIntake.set(1);
-                    m_ShooterLeft.set(0.1);
-                    m_ShooterRight.set(0.1);
-                    m_Timer.stop();
-                    m_Timer.reset();
+                    m_ShooterLeft.set(-0.1);
+                    m_ShooterRight.set(-0.1);
                 })
             ),
 
@@ -200,8 +198,8 @@ public class RobotContainer {
             Commands.runOnce(() -> {
                 m_Intake.set(1);
                 m_SecondIntake.set(1);
-                m_ShooterLeft.set(0.1);
-                m_ShooterRight.set(0.1);
+                m_ShooterLeft.set(-0.1);
+                m_ShooterRight.set(-0.1);
                 m_Timer.stop();
                 m_Timer.reset();
             }),
@@ -216,8 +214,8 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     m_Intake.set(1);
                     m_SecondIntake.set(1);
-                    m_ShooterLeft.set(0.1);
-                    m_ShooterRight.set(0.1);
+                    m_ShooterLeft.set(-0.1);
+                    m_ShooterRight.set(-0.1);
                     m_Timer.stop();
                     m_Timer.reset();
                 })
@@ -247,11 +245,13 @@ public class RobotContainer {
         return Commands.run(()->{            
             if (!m_Timer.hasElapsed(0.3)) {
                 m_Intake.set(-0.5);
-                m_ShooterLeft.set(-0.6);
-                m_ShooterRight.set(-0.6);
+                m_ShooterLeft.set(0.6);
+                m_ShooterRight.set(0.6);
             }
             else if (!m_Timer.hasElapsed(2)) {
                 m_Intake.set(0);
+                m_ShooterLeft.set(0.6);
+                m_ShooterRight.set(0.6);
             }
             else if (!m_Timer.hasElapsed(2.3)) {
                 m_Intake.set(1);
