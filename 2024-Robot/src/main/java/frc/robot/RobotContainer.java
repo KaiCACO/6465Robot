@@ -67,12 +67,44 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
     public Command getLeftAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
-        return shootCommand.withTimeout(4);
+        return new SequentialCommandGroup(
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            .andThen(
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+            )
+            .andThen(
+                Commands.runOnce(() -> {
+                    m_Intake.set(1);
+                    m_SecondIntake.set(1);
+                    m_ShooterLeft.set(0.1);
+                    m_ShooterRight.set(0.1);
+                    m_Timer.stop();
+                    m_Timer.reset();
+                })
+            ),
+
+            Commands.waitSeconds(0.5)
+        );
     }
     public Command getRightAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
-        return shootCommand.withTimeout(4);
+        return new SequentialCommandGroup(
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            .andThen(
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+            )
+            .andThen(
+                Commands.runOnce(() -> {
+                    m_Intake.set(1);
+                    m_SecondIntake.set(1);
+                    m_ShooterLeft.set(0.1);
+                    m_ShooterRight.set(0.1);
+                    m_Timer.stop();
+                    m_Timer.reset();
+                })
+            ),
+
+            Commands.waitSeconds(0.5)
+        );
     }
 
     public Command getMiddleAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
@@ -138,17 +170,6 @@ public class RobotContainer {
             thetaController,
             m_robotDrive::setModuleStates,
             m_robotDrive);
-
-        Command intake = Commands.startEnd(
-            () -> {
-                m_Intake.set(0.8);
-                m_SecondIntake.set(0.8);
-            },
-            () -> {
-                m_Intake.set(0);
-                m_SecondIntake.set(0);
-            }
-        );
         
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
