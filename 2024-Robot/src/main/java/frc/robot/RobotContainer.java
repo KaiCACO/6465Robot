@@ -76,7 +76,7 @@ public class RobotContainer {
         return shoot.withTimeout(4);
     }
 
-    public Command getMiddleAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+    public Command getMiddleAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -141,16 +141,17 @@ public class RobotContainer {
             m_robotDrive);
 
         Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_Intake, m_SecondIntake);
-        Command intake = new RunCommand(
+        Command intake = Commands.startEnd(
             () -> {
-                m_intake.set(0.8);
-                m_secondIntake.set(0.8);
+                m_Intake.set(0.8);
+                m_SecondIntake.set(0.8);
             },
             () -> {
-                m_intake.set(0);
-                m_secondIntake.set(0);
-            })
-            .withTimeout(4);
+                m_Intake.set(0);
+                m_SecondIntake.set(0);
+            }
+        )
+        .withTimeout(4);
         
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
@@ -166,13 +167,13 @@ public class RobotContainer {
             shoot.withTimeout(4),
 
             forwardLeftCommand
-            .withTimeout(4),
+            .withTimeout(4)
             .alongWith(intake),
 
             shoot.withTimeout(4),
 
             forwardRightCommand
-            .withTimeout(4),
+            .withTimeout(4)
             .alongWith(intake),
 
             shoot.withTimeout(4)
