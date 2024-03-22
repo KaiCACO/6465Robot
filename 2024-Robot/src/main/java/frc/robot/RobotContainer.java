@@ -90,7 +90,7 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -178,7 +178,7 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -197,7 +197,7 @@ public class RobotContainer {
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
 
-            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9),
 
             Commands.runOnce(() -> {
                 m_Intake.set(1);
@@ -214,7 +214,7 @@ public class RobotContainer {
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -233,7 +233,7 @@ public class RobotContainer {
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -256,10 +256,10 @@ public class RobotContainer {
                 m_ShooterLeft.set(-0.6);
                 m_ShooterRight.set(-0.6);
             }
-            else if (!m_Timer.hasElapsed(2.5)) {
+            else if (!m_Timer.hasElapsed(1.5)) {
                 m_Intake.set(0);
             }
-            else if (!m_Timer.hasElapsed(3)) {
+            else if (!m_Timer.hasElapsed(1.8)) {
                 m_Intake.set(1);
             }
         });
