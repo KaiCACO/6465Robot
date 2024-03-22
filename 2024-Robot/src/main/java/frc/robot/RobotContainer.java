@@ -15,7 +15,6 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.PS4Controller.Button;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
@@ -25,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import java.util.List;
 
 import com.revrobotics.CANSparkMax;
@@ -68,15 +66,16 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
     public Command getLeftAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_intake, m_SecondIntake);
-        return shoot.withTimeout(4);
+        Command shootCommand = shoot(m_intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+        return shootCommand.withTimeout(4);
     }
     public Command getRightAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_intake, m_SecondIntake);
-        return shoot.withTimeout(4);
+        Command shootCommand = shoot(m_intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+        return shootCommand.withTimeout(4);
     }
 
     public Command getMiddleAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -140,7 +139,6 @@ public class RobotContainer {
             m_robotDrive::setModuleStates,
             m_robotDrive);
 
-        Command shoot = new Shoot(m_ShooterLeft, m_ShooterRight, m_Intake, m_SecondIntake);
         Command intake = Commands.startEnd(
             () -> {
                 m_Intake.set(0.8);
@@ -150,96 +148,63 @@ public class RobotContainer {
                 m_Intake.set(0);
                 m_SecondIntake.set(0);
             }
-        )
-        .withTimeout(4);
+        );
         
         // Reset odometry to the starting pose
         m_robotDrive.resetOdometry(forwardTrajectory.getInitialPose());
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
-            shoot.withTimeout(4),
+            shootCommand.withTimeout(2.6),
 
             forwardCommand
             .withTimeout(4)
-            .alongWith(intake),
+            .alongWith(intake.withTimeout(4))//,
 
-            shoot.withTimeout(4),
+            // shoot.withTimeout(2),
 
-            forwardLeftCommand
-            .withTimeout(4)
-            .alongWith(intake),
+            // forwardLeftCommand
+            // .withTimeout(4)
+            // .alongWith(intake.withTimeout(4)),
 
-            shoot.withTimeout(4),
+            // shoot.withTimeout(2),    
 
-            forwardRightCommand
-            .withTimeout(4)
-            .alongWith(intake),
+            // forwardRightCommand
+            // .withTimeout(4)
+            // .alongWith(intake.withTimeout(4)),
 
-            shoot.withTimeout(4)
+            // shoot.withTimeout(2)
         );
     }
     
-    public class Shoot extends Command {
-        private final Timer m_timer = new Timer();
+    private final Timer m_Timer = new Timer();
 
-        private CANSparkMax m_shooterLeft;
-        private CANSparkMax m_shooterRight;
-        private CANSparkMax m_intake;
-        private CANSparkMax m_secondIntake;
-
-        public Shoot(CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight, CANSparkMax m_Intake, CANSparkMax m_SecondIntake) {
-            this.m_shooterLeft = m_ShooterLeft;
-            this.m_shooterRight = m_ShooterRight;
-            this.m_intake = m_Intake;
-            this.m_secondIntake = m_SecondIntake;
-        }
-    
-        // Called just before this Command runs the first time
-        public void initialize() {
-            this.m_shooterLeft.set(0.6);
-            this.m_shooterRight.set(0.6);
-            m_timer.reset();
-            m_timer.start();
-        }
-
-        // Called repeatedly when this Command is scheduled to run
-        public void execute() {
-            System.out.println(m_timer.get());
-            if (!m_timer.hasElapsed(0.3)) {
-                this.m_intake.set(-0.5);
-                this.m_secondIntake.set(-0.5);
+    Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        return Commands.run(()->{
+            if (!m_Timer.hasElapsed(0.001)) {
+                m_Timer.start();
             }
-            else if (!m_timer.hasElapsed(1.5)) {
-                this.m_intake.set(0);
-                this.m_secondIntake.set(0);
-                this.m_shooterLeft.set(0.6);
-                this.m_shooterRight.set(0.6);
+
+            System.out.println(m_Timer.get());
+            
+            if (!m_Timer.hasElapsed(0.5)) {
+                m_Intake.set(0.5);
+                m_ShooterLeft.set(-0.6);
+                m_ShooterRight.set(-0.6);
+            }
+            else if (!m_Timer.hasElapsed(2)) {
+                m_Intake.set(0);
+            }
+            else if (!m_Timer.hasElapsed(2.5)) {
+                m_Intake.set(-1);
             }
             else {
-                this.m_intake.set(1);
-                this.m_secondIntake.set(1);
+                m_Intake.set(0);
+                m_ShooterLeft.set(0);
+                m_ShooterRight.set(0);
+                m_Timer.stop();
+                m_Timer.reset();
             }
-        }
-    
-        // Make this return true when this Command no longer needs to run execute()
-        public boolean isFinished() {
-            return m_timer.get() > 2.5;
-        }
-    
-        // Called once after isFinished returns true
-        public void end() {
-            this.m_intake.set(0);
-            this.m_secondIntake.set(0);
-            this.m_shooterLeft.set(0);
-            this.m_shooterRight.set(0);
-        }
-    
-        // Called when another command which requires one or more of the same
-        // subsystems is scheduled to run
-        public void interrupted() {
-           end();
-        }
-    }
-    
+        });
+    };
 }

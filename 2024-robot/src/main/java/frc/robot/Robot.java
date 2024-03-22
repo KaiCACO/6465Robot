@@ -226,9 +226,9 @@ public class Robot extends TimedRobot {
       m_LeadScrew.getEncoder().setPosition(0);
     }
     if (m_ScrewLimitFront.get()) {
-      var convFac = m_LeadScrew.getEncoder().getPositionConversionFactor();
-      var encPos = m_LeadScrew.getEncoder().getPosition();
-      var newFac = (1/(encPos/convFac))*convFac;
+      // var convFac = m_LeadScrew.getEncoder().getPositionConversionFactor();
+      // var encPos = m_LeadScrew.getEncoder().getPosition();
+      // var newFac = (1/(encPos/convFac))*convFac;
       // m_LeadScrew.getEncoder().setPositionConversionFactor(newFac);
     }
 
