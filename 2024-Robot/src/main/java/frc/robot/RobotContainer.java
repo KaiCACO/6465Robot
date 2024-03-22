@@ -90,7 +90,7 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -178,7 +178,7 @@ public class RobotContainer {
         return new SequentialCommandGroup(
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -191,13 +191,11 @@ public class RobotContainer {
                 })
             ),
 
-            Commands.waitSeconds(0.5),
-
             forwardCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
 
-            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4),
 
             Commands.runOnce(() -> {
                 m_Intake.set(1);
@@ -208,13 +206,11 @@ public class RobotContainer {
                 m_Timer.reset();
             }),
 
-            Commands.waitSeconds(0.5),
-
             forwardLeftCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -227,13 +223,11 @@ public class RobotContainer {
                 })
             ),
 
-            Commands.waitSeconds(0.5),
-
             forwardRightCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
             .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(1.9)
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
             .andThen(
                 Commands.runOnce(() -> {
@@ -251,15 +245,15 @@ public class RobotContainer {
 
     private Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         return Commands.run(()->{            
-            if (!m_Timer.hasElapsed(0.2)) {
+            if (!m_Timer.hasElapsed(0.3)) {
                 m_Intake.set(-0.5);
                 m_ShooterLeft.set(-0.6);
                 m_ShooterRight.set(-0.6);
             }
-            else if (!m_Timer.hasElapsed(1.5)) {
+            else if (!m_Timer.hasElapsed(2)) {
                 m_Intake.set(0);
             }
-            else if (!m_Timer.hasElapsed(1.8)) {
+            else if (!m_Timer.hasElapsed(2.3)) {
                 m_Intake.set(1);
             }
         });
