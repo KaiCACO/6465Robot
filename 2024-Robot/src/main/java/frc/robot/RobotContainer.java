@@ -76,7 +76,6 @@ public class RobotContainer {
     }
 
     public Command getMiddleAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
         // Create config for trajectory
         TrajectoryConfig config = new TrajectoryConfig(
             AutoConstants.kMaxSpeedMetersPerSecond,
@@ -86,20 +85,20 @@ public class RobotContainer {
 
         Trajectory forwardTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(1.5, 0)),
+            List.of(new Translation2d(1.5, 0), new Translation2d(0.5, 0.1)),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardLeftTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(0.5, 1.0), new Translation2d(1.5, 1.0)),
-            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            List.of(new Translation2d(0.5, 1.1), new Translation2d(1.5, 1.2)),
+            new Pose2d(0.1, 0, Rotation2d.fromDegrees(0)),
             config);
 
         Trajectory forwardRightTrajectory = TrajectoryGenerator.generateTrajectory(
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(new Translation2d(0.5, -1.0), new Translation2d(1.5, -1.0)),
-            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+            List.of(new Translation2d(0.5, -1.1), new Translation2d(1.5, -1.2)),
+            new Pose2d(0.1, 0, Rotation2d.fromDegrees(0)),
             config);
 
 
@@ -156,55 +155,91 @@ public class RobotContainer {
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            .andThen(
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+            )
+            .andThen(
+                Commands.runOnce(() -> {
+                    m_Intake.set(1);
+                    m_SecondIntake.set(1);
+                    m_ShooterLeft.set(0.1);
+                    m_ShooterRight.set(0.1);
+                    m_Timer.stop();
+                    m_Timer.reset();
+                })
+            ),
+
+            Commands.waitSeconds(0.5),
+
+            forwardCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+
             Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
 
-            shootCommand.withTimeout(2.6),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3),
 
             Commands.runOnce(() -> {
-                //m_Intake.set(0);
-                m_ShooterLeft.set(0);
-                m_ShooterRight.set(0);
+                m_Intake.set(1);
+                m_SecondIntake.set(1);
+                m_ShooterLeft.set(0.1);
+                m_ShooterRight.set(0.1);
                 m_Timer.stop();
                 m_Timer.reset();
             }),
 
-            Commands.waitSeconds(1),
+            Commands.waitSeconds(0.5),
 
-            Commands.runOnce(() -> {System.out.println(m_Timer.get());}),
+            forwardLeftCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
-            forwardCommand
-            .andThen(Commands.runOnce(() -> {
-                m_robotDrive.drive(0, 0, 0, false, false);
-            }))
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            .andThen(
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+            )
+            .andThen(
+                Commands.runOnce(() -> {
+                    m_Intake.set(1);
+                    m_SecondIntake.set(1);
+                    m_ShooterLeft.set(0.1);
+                    m_ShooterRight.set(0.1);
+                    m_Timer.stop();
+                    m_Timer.reset();
+                })
+            ),
 
-            // shootCommand.withTimeout(2.6),
+            Commands.waitSeconds(0.5),
 
-            // forwardLeftCommand
-            // .withTimeout(4)
-            // .alongWith(intake.withTimeout(4)),
+            forwardRightCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
-            // shootCommand.withTimeout(2.6),  
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
+            .andThen(
+                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(3)
+            )
+            .andThen(
+                Commands.runOnce(() -> {
+                    m_Intake.set(0);
+                    m_SecondIntake.set(0);
+                    m_ShooterLeft.set(0);
+                    m_ShooterRight.set(0);
+                    m_Timer.stop();
+                    m_Timer.reset();
+                })
+            )
 
-            // forwardRightCommand
-            // .withTimeout(4)
-            // .alongWith(intake.withTimeout(4)),
-
-            // shootCommand.withTimeout(2.6)
         );
     }
 
     private Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         return Commands.run(()->{            
             if (!m_Timer.hasElapsed(0.2)) {
-                m_Intake.set(0.5);
+                m_Intake.set(-0.5);
                 m_ShooterLeft.set(-0.6);
                 m_ShooterRight.set(-0.6);
             }
-            else if (!m_Timer.hasElapsed(2)) {
+            else if (!m_Timer.hasElapsed(2.5)) {
                 m_Intake.set(0);
             }
-            else if (!m_Timer.hasElapsed(2.5)) {
-                m_Intake.set(-1);
+            else if (!m_Timer.hasElapsed(3)) {
+                m_Intake.set(1);
             }
         });
     };

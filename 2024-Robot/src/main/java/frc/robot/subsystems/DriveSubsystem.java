@@ -85,7 +85,9 @@ public class DriveSubsystem extends SubsystemBase {
    * @return The pose.
    */
   public Pose2d getPose() {
-    return m_odometry.getPoseMeters();
+    var odometryEstimate = m_odometry.getPoseMeters();
+    System.out.println(odometryEstimate);
+    return odometryEstimate;
   }
 
   /**

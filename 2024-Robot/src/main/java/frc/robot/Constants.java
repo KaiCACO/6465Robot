@@ -70,11 +70,11 @@ public final class Constants {
     public static final int kShooterLeftCanId = 13;
     public static final int kShooterRightCanId = 14;
 
-    public static final int kArmLeftBreakPort = 8;
-    public static final int kArmLeftBreakPort2 = 9;
+    public static final int kArmLeftBreakPort = 7;
+    public static final int kArmLeftBreakPort2 = 15;
 
-    public static final int kArmRightBreakPort = 15;
-    public static final int kArmRightBreakPort2 = 14;
+    public static final int kArmRightBreakPort = 9;
+    public static final int kArmRightBreakPort2 = 8;
 
     public static final int kBackScrewLimitChannel = 8;
     public static final int kFrontScrewLimitChannel = 9;
