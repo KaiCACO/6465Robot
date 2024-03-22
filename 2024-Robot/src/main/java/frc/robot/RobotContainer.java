@@ -37,6 +37,7 @@ import com.revrobotics.CANSparkMax;
 public class RobotContainer {
   // The robot's subsystems
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final Timer m_Timer = new Timer();
 
   // The driver's controller
   XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
@@ -65,12 +66,12 @@ public class RobotContainer {
    *
    * @return the command to run in autonomous
    */
-    public Command getLeftAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shootCommand = shoot(m_intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    public Command getLeftAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
         return shootCommand.withTimeout(4);
     }
-    public Command getRightAutoCommand(CANSparkMax m_intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        Command shootCommand = shoot(m_intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
+    public Command getRightAutoCommand(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        Command shootCommand = shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight);
         return shootCommand.withTimeout(4);
     }
 
@@ -155,11 +156,26 @@ public class RobotContainer {
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
+
             shootCommand.withTimeout(2.6),
 
+            Commands.runOnce(() -> {
+                //m_Intake.set(0);
+                m_ShooterLeft.set(0);
+                m_ShooterRight.set(0);
+                m_Timer.stop();
+                m_Timer.reset();
+            }),
+
+            Commands.waitSeconds(1),
+
+            Commands.runOnce(() -> {System.out.println(m_Timer.get());}),
+
             forwardCommand
-            .withTimeout(4)
-            .alongWith(intake.withTimeout(4))//,
+            .andThen(Commands.runOnce(() -> {
+                m_robotDrive.drive(0, 0, 0, false, false);
+            }))
 
             // shootCommand.withTimeout(2.6),
 
@@ -176,18 +192,10 @@ public class RobotContainer {
             // shootCommand.withTimeout(2.6)
         );
     }
-    
-    private final Timer m_Timer = new Timer();
 
-    Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
-        return Commands.run(()->{
-            if (!m_Timer.hasElapsed(0.001)) {
-                m_Timer.start();
-            }
-
-            System.out.println(m_Timer.get());
-            
-            if (!m_Timer.hasElapsed(0.5)) {
+    private Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
+        return Commands.run(()->{            
+            if (!m_Timer.hasElapsed(0.2)) {
                 m_Intake.set(0.5);
                 m_ShooterLeft.set(-0.6);
                 m_ShooterRight.set(-0.6);
@@ -197,13 +205,6 @@ public class RobotContainer {
             }
             else if (!m_Timer.hasElapsed(2.5)) {
                 m_Intake.set(-1);
-            }
-            else {
-                m_Intake.set(0);
-                m_ShooterLeft.set(0);
-                m_ShooterRight.set(0);
-                m_Timer.stop();
-                m_Timer.reset();
             }
         });
     };
