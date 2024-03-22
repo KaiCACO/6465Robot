@@ -176,7 +176,7 @@ public class RobotContainer {
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start(); m_Intake.setInverted(false); m_ShooterLeft.setInverted(false); m_ShooterRight.setInverted(true);})
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start(); m_Intake.setInverted(true); m_ShooterLeft.setInverted(false); m_ShooterRight.setInverted(false);})
             .andThen(
                 shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
             )
@@ -243,7 +243,7 @@ public class RobotContainer {
 
     private Command shoot(CANSparkMax m_Intake, CANSparkMax m_SecondIntake, CANSparkMax m_ShooterLeft, CANSparkMax m_ShooterRight) {
         return Commands.run(()->{            
-            if (!m_Timer.hasElapsed(0.3)) {
+            if (!m_Timer.hasElapsed(0.5)) {
                 m_Intake.set(-0.5);
                 m_ShooterLeft.set(0.6);
                 m_ShooterRight.set(0.6);
