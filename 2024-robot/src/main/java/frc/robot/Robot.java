@@ -131,6 +131,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+
+    m_ShooterLeft.setInverted(true);
+    m_ShooterRight.setInverted(true);
+    m_Intake.setInverted(true);
+    m_LeadScrew.setInverted(false);
+    m_ArmLeft.setInverted(true);
+    m_ArmRight.setInverted(true);
+    
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
@@ -237,13 +245,8 @@ public class Robot extends TimedRobot {
 
     // Intake control
     if (xbox.getAButton()) {
-      if (m_LeadScrew.getEncoder().getPosition() > 0.35) {
-        m_LeadScrew.set(-0.5);
-      }
-      else {
-        m_Intake.set(0.8);
-        m_SecondIntake.set(0.8);
-      }
+      m_Intake.set(0.8);
+      m_SecondIntake.set(0.8);
     }
     else if (xbox.getYButton()) {
       m_Intake.set(-0.8);

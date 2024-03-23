@@ -76,8 +76,8 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     m_Intake.set(1);
                     m_SecondIntake.set(1);
-                    m_ShooterLeft.set(0.1);
-                    m_ShooterRight.set(0.1);
+                    m_ShooterLeft.set(-0.1);
+                    m_ShooterRight.set(-0.1);
                     m_Timer.stop();
                     m_Timer.reset();
                 })
@@ -96,8 +96,8 @@ public class RobotContainer {
                 Commands.runOnce(() -> {
                     m_Intake.set(1);
                     m_SecondIntake.set(1);
-                    m_ShooterLeft.set(0.1);
-                    m_ShooterRight.set(0.1);
+                    m_ShooterLeft.set(-0.1);
+                    m_ShooterRight.set(-0.1);
                     m_Timer.stop();
                     m_Timer.reset();
                 })
@@ -176,23 +176,7 @@ public class RobotContainer {
 
         // Sequence the commands with motor activation
         return new SequentialCommandGroup(
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start(); m_Intake.setInverted(true); m_ShooterLeft.setInverted(false); m_ShooterRight.setInverted(false);})
-            .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
-            )
-            .andThen(
-                Commands.runOnce(() -> {
-                    m_Intake.set(1);
-                    m_SecondIntake.set(1);
-                    m_ShooterLeft.set(-0.1);
-                    m_ShooterRight.set(-0.1);
-                })
-            ),
-
-            forwardCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
-
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
-
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start(); m_Intake.setInverted(true); m_ShooterLeft.setInverted(false); m_ShooterRight.setInverted(false);}),
             shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4),
 
             Commands.runOnce(() -> {
@@ -200,44 +184,42 @@ public class RobotContainer {
                 m_SecondIntake.set(1);
                 m_ShooterLeft.set(-0.1);
                 m_ShooterRight.set(-0.1);
-                m_Timer.stop();
-                m_Timer.reset();
+            }),
+
+            forwardCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
+
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4),
+
+            Commands.runOnce(() -> {
+                m_Intake.set(1);
+                m_SecondIntake.set(1);
+                m_ShooterLeft.set(-0.1);
+                m_ShooterRight.set(-0.1);
             }),
 
             forwardLeftCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
-            .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
-            )
-            .andThen(
-                Commands.runOnce(() -> {
-                    m_Intake.set(1);
-                    m_SecondIntake.set(1);
-                    m_ShooterLeft.set(-0.1);
-                    m_ShooterRight.set(-0.1);
-                    m_Timer.stop();
-                    m_Timer.reset();
-                })
-            ),
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4),
+
+            Commands.runOnce(() -> {
+                m_Intake.set(1);
+                m_SecondIntake.set(1);
+                m_ShooterLeft.set(-0.1);
+                m_ShooterRight.set(-0.1);
+            }),
 
             forwardRightCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false, false)),
 
-            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();})
-            .andThen(
-                shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4)
-            )
-            .andThen(
-                Commands.runOnce(() -> {
-                    m_Intake.set(0);
-                    m_SecondIntake.set(0);
-                    m_ShooterLeft.set(0);
-                    m_ShooterRight.set(0);
-                    m_Timer.stop();
-                    m_Timer.reset();
-                })
-            )
-
+            Commands.runOnce(() -> {m_Timer.reset(); m_Timer.start();}),
+            shoot(m_Intake, m_SecondIntake, m_ShooterLeft, m_ShooterRight).withTimeout(2.4),
+            Commands.runOnce(() -> {
+                m_Intake.set(0);
+                m_SecondIntake.set(0);
+                m_ShooterLeft.set(0);
+                m_ShooterRight.set(0);
+            })
         );
     }
 
